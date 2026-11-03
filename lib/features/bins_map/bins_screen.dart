@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import 'package:recicla_radar_sp/core/router/app_routes.dart';
 import 'package:recicla_radar_sp/core/theme/app_spacing.dart';
+import 'package:recicla_radar_sp/core/widgets/map_attribution.dart';
 import 'package:recicla_radar_sp/core/widgets/settings_action.dart';
 import 'package:recicla_radar_sp/core/widgets/state_views.dart';
 import 'package:recicla_radar_sp/data/models/bin.dart';
@@ -97,7 +98,7 @@ class _BinsMap extends StatelessWidget {
                   ),
               ],
             ),
-            const SimpleAttributionWidget(source: Text('© OpenStreetMap')),
+            const MapAttribution(),
           ],
         ),
         const Positioned(top: AppSpacing.sm, left: AppSpacing.sm, child: BinLegend()),

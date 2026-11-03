@@ -141,9 +141,11 @@ class MaterialLegend extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
-              Text(
-                '${material.label}: ${Formatters.kg(kgByMaterial[material] ?? 0)}',
-                style: theme.textTheme.bodyMedium,
+              Flexible(
+                child: Text(
+                  '${material.label}: ${Formatters.kg(kgByMaterial[material] ?? 0)}',
+                  style: theme.textTheme.bodyMedium,
+                ),
               ),
             ],
           ),

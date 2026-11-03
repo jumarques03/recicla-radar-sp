@@ -4,6 +4,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 
 import 'package:recicla_radar_sp/core/theme/app_spacing.dart';
+import 'package:recicla_radar_sp/core/widgets/map_attribution.dart';
 import 'package:recicla_radar_sp/core/widgets/settings_action.dart';
 import 'package:recicla_radar_sp/core/widgets/state_views.dart';
 import 'package:recicla_radar_sp/data/models/district.dart';
@@ -93,7 +94,7 @@ class DemandMapScreen extends StatelessWidget {
                       ),
                   ],
                 ),
-                const SimpleAttributionWidget(source: Text('© OpenStreetMap')),
+                const MapAttribution(),
               ],
             ),
             const Positioned(
