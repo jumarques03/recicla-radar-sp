@@ -1,0 +1,123 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'package:recicla_radar_sp/core/router/app_router.dart';
+import 'package:recicla_radar_sp/core/theme/dark_theme.dart';
+import 'package:recicla_radar_sp/core/theme/light_theme.dart';
+import 'package:recicla_radar_sp/data/repositories/auth_repository.dart';
+import 'package:recicla_radar_sp/data/repositories/data_repositories.dart';
+import 'package:recicla_radar_sp/data/repositories/mock_auth_repository.dart';
+import 'package:recicla_radar_sp/data/repositories/mock_repositories.dart';
+import 'package:recicla_radar_sp/state/alerts_provider.dart';
+import 'package:recicla_radar_sp/state/bins_provider.dart';
+import 'package:recicla_radar_sp/state/districts_provider.dart';
+import 'package:recicla_radar_sp/state/filters_provider.dart';
+import 'package:recicla_radar_sp/state/overview_provider.dart';
+import 'package:recicla_radar_sp/state/session_provider.dart';
+import 'package:recicla_radar_sp/state/settings_provider.dart';
+
+/// Raiz do app: injeta repositórios (mock) e estados globais.
+///
+/// Para trocar o mock por Firebase, basta passar outras implementações das
+/// interfaces de `data/repositories` aqui; nenhuma tela precisa mudar.
+class ReciclaRadarApp extends StatelessWidget {
+  const ReciclaRadarApp({
+    super.key,
+    required this.prefs,
+    this.authRepository,
+    this.binRepository,
+    this.districtRepository,
+    this.alertRepository,
+    this.inspectionRepository,
+    this.overviewRepository,
+  });
+
+  final SharedPreferences prefs;
+  final AuthRepository? authRepository;
+  final BinRepository? binRepository;
+  final DistrictRepository? districtRepository;
+  final AlertRepository? alertRepository;
+  final InspectionRepository? inspectionRepository;
+  final OverviewRepository? overviewRepository;
+
+  @override
+  Widget build(BuildContext context) {
+    final bins = binRepository ?? MockBinRepository();
+
+    return MultiProvider(
+      providers: [
+        Provider<BinRepository>.value(value: bins),
+        Provider<InspectionRepository>.value(
+          value: inspectionRepository ?? MockInspectionRepository(),
+        ),
+        ChangeNotifierProvider(create: (_) => SettingsProvider(prefs)),
+        ChangeNotifierProvider(
+          create: (_) => SessionProvider(authRepository ?? MockAuthRepository()),
+        ),
+        ChangeNotifierProvider(create: (_) => FiltersProvider()),
+        ChangeNotifierProvider(create: (_) => BinsProvider(bins)..load()),
+        ChangeNotifierProvider(
+          create: (_) => DistrictsProvider(districtRepository ?? MockDistrictRepository())..load(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => AlertsProvider(alertRepository ?? MockAlertRepository())..load(),
+        ),
+        ChangeNotifierProxyProvider<FiltersProvider, OverviewProvider>(
+          create: (_) => OverviewProvider(overviewRepository ?? MockOverviewRepository()),
+          update: (_, filters, overview) => overview!..applyFilters(filters),
+        ),
+      ],
+      child: const _AppView(),
+    );
+  }
+}
+
+class _AppView extends StatefulWidget {
+  const _AppView();
+
+  @override
+  State<_AppView> createState() => _AppViewState();
+}
+
+class _AppViewState extends State<_AppView> {
+  late final GoRouter _router = createAppRouter(context.read<SessionProvider>());
+
+  @override
+  void dispose() {
+    _router.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final settings = context.watch<SettingsProvider>();
+
+    return MaterialApp.router(
+      title: 'Recicla Radar SP',
+      debugShowCheckedModeBanner: false,
+      theme: buildLightTheme(),
+      darkTheme: buildDarkTheme(),
+      themeMode: settings.themeMode,
+      routerConfig: _router,
+      locale: const Locale('pt', 'BR'),
+      supportedLocales: const [Locale('pt', 'BR')],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      builder: (context, child) {
+        // Respeita a fonte do sistema e soma a escolha feita nas Configurações.
+        final media = MediaQuery.of(context);
+        final scale = (media.textScaler.scale(1) * settings.textScale).clamp(0.8, 2.2);
+        return MediaQuery(
+          data: media.copyWith(textScaler: TextScaler.linear(scale)),
+          child: child!,
+        );
+      },
+    );
+  }
+}

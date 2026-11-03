@@ -15,6 +15,12 @@ abstract final class Formatters {
 
   static String kg(double value) => '${_kg.format(value)} kg';
 
+  /// Versão curta para eixos de gráfico: "850", "1,2 mil".
+  static String compactKg(double value) {
+    if (value >= 1000) return '${_decimal.format(value / 1000)} mil';
+    return value.round().toString();
+  }
+
   static String decimal(double value) => _decimal.format(value);
 
   static String percent(num value) => '${value.round()}%';
