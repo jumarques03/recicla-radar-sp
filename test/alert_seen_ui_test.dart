@@ -65,7 +65,8 @@ void main() {
 
     await tester.tap(find.text('Alertas').last);
     await tester.pumpAndSettle(const Duration(seconds: 1));
-    await tester.ensureVisible(find.textContaining('deve encher').first);
+    Scrollable.ensureVisible(tester.element(find.textContaining('deve encher').first), alignment: 0.4);
+    await tester.pumpAndSettle();
     await tester.tap(find.textContaining('deve encher').first);
     await tester.pumpAndSettle(const Duration(seconds: 1));
 

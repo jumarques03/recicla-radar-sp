@@ -25,6 +25,12 @@ Future<void> signIn(WidgetTester tester, Size size, double textScale) async {
   await tester.pumpAndSettle(const Duration(seconds: 2));
 }
 
+/// Leva o item para o meio da tela, longe das bordas e da barra de navegação.
+Future<void> bringToMiddle(WidgetTester tester, Finder finder) async {
+  Scrollable.ensureVisible(tester.element(finder.first), alignment: 0.4);
+  await tester.pumpAndSettle();
+}
+
 /// Rola a lista visível até o texto aparecer (as outras abas ficam fora da tela).
 Future<void> scrollTo(WidgetTester tester, String text) async {
   // A tela aberta fica por último na árvore; as outras abas ficam fora da tela.
@@ -60,7 +66,7 @@ void main() {
       expect(tester.takeException(), isNull);
 
       // Detalhe do alerta.
-      await tester.ensureVisible(find.textContaining('deve encher').first);
+      await bringToMiddle(tester, find.textContaining('deve encher'));
       await tester.tap(find.textContaining('deve encher').first);
       await tester.pumpAndSettle(const Duration(seconds: 1));
       await scrollTo(tester, 'Qual é a sua decisão?');
@@ -74,7 +80,7 @@ void main() {
       await tester.pumpAndSettle(const Duration(seconds: 1));
       await tester.tap(find.text('Lista'));
       await tester.pumpAndSettle();
-      await tester.ensureVisible(find.textContaining('Lixeira ').first);
+      await bringToMiddle(tester, find.textContaining('Lixeira '));
       await tester.tap(find.textContaining('Lixeira ').first);
       await tester.pumpAndSettle(const Duration(seconds: 1));
       await scrollTo(tester, 'Registrar vistoria');
