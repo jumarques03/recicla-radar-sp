@@ -33,6 +33,29 @@ abstract final class CityLayers {
     );
   }
 
+  /// Distritos pintados. [colorFor] devolve a cor de cada distrito pelo id
+  /// (ou `null` para deixar sem cor). Não recebe toques.
+  static Widget districtFills(
+    CityBoundaries boundaries, {
+    required Color? Function(String districtId) colorFor,
+    double alpha = 0.35,
+    double borderWidth = 1.2,
+  }) {
+    return PolygonLayer(
+      polygons: [
+        for (final district in boundaries.districts.values)
+          for (final polygon in district.polygons)
+            Polygon(
+              points: polygon.outer,
+              holePointsList: polygon.holes,
+              color: colorFor(district.id)?.withValues(alpha: alpha),
+              borderStrokeWidth: borderWidth,
+              borderColor: districtBorder.withValues(alpha: 0.8),
+            ),
+      ],
+    );
+  }
+
   /// Borda fina de todos os distritos, sem preenchimento.
   static Widget districtBorders(CityBoundaries boundaries, {double width = 1.2}) {
     return PolygonLayer(

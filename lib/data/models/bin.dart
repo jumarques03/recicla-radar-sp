@@ -32,6 +32,7 @@ class Bin {
     required this.totalKg,
     required this.kgByMaterial,
     required this.lastCollection,
+    required this.lastSignalAt,
   });
 
   final String id;
@@ -51,4 +52,7 @@ class Bin {
   final double totalKg;
   final Map<WasteMaterial, double> kgByMaterial;
   final DateTime lastCollection;
+
+  /// Última vez que o sensor enviou uma leitura.
+  final DateTime lastSignalAt;
 }

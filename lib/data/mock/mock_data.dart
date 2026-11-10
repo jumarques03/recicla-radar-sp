@@ -4,7 +4,6 @@ import 'package:latlong2/latlong.dart';
 
 import 'package:recicla_radar_sp/data/mock/district_seeds.dart';
 import 'package:recicla_radar_sp/data/mock/simulation_config.dart';
-import 'package:recicla_radar_sp/data/models/alert.dart';
 import 'package:recicla_radar_sp/data/models/bin.dart';
 import 'package:recicla_radar_sp/data/models/disposal_point.dart';
 import 'package:recicla_radar_sp/data/models/district.dart';
@@ -29,7 +28,6 @@ abstract final class MockData {
 
   /// Leituras da mais recente (índice 0) para a mais antiga.
   static Map<String, List<Reading>> get readingsByBin => _world.readings;
-  static final List<Alert> alerts = _buildAlerts();
 
   static String _districtName(String id) =>
       districtSeeds.firstWhere((seed) => '${seed.$1}' == id).$2;
@@ -110,12 +108,12 @@ abstract final class MockData {
         (18 + spec.$1.intensity * 5 + random.nextInt(25) - 12).clamp(8, 89),
     ];
 
-    // As três lixeiras dos pontos mais movimentados já estão quase cheias.
+    // As lixeiras dos pontos mais movimentados já estão quase cheias.
     final busiest = [for (var i = 0; i < specs.length; i++) i]..sort((a, b) {
         final byIntensity = specs[b].$1.intensity.compareTo(specs[a].$1.intensity);
         return byIntensity != 0 ? byIntensity : a.compareTo(b);
       });
-    const nearlyFull = [96, 91, 88];
+    const nearlyFull = [98, 93, 88, 84, 82, 79];
     for (var i = 0; i < nearlyFull.length; i++) {
       fills[busiest[i]] = nearlyFull[i];
     }
@@ -137,6 +135,21 @@ abstract final class MockData {
     return _World(bins, Map.unmodifiable(readings));
   }
 
+  /// Aumentos incomuns de um material, por índice da lixeira:
+  /// (material, dias seguidos, multiplicador do volume).
+  static const Map<int, (WasteMaterial, int, double)> _anomalies = {
+    20: (WasteMaterial.glass, 2, 2.6),
+    55: (WasteMaterial.plastic, 4, 2.3),
+    120: (WasteMaterial.metal, 6, 3.4),
+  };
+
+  /// Distritos em que a coleta dos últimos 7 dias caiu (multiplicador do volume).
+  static const Map<String, double> _collectionDrops = {
+    'Itaquera': 0.70,
+    'Penha': 0.80,
+    'Santana': 0.62,
+  };
+
   static Bin _buildBin({
     required int index,
     required DisposalPoint point,
@@ -154,23 +167,42 @@ abstract final class MockData {
     final status = keepFillStatus
         ? statusFromFill
         : switch (index) {
-            _ when index % 37 == 6 => BinStatus.offline,
+            _ when index % 59 == 6 => BinStatus.offline,
             _ when index % 11 == 4 => BinStatus.maintenance,
             _ => statusFromFill,
           };
 
     final id = 'bin-${(index + 1).toString().padLeft(2, '0')}';
-    final readings = _readingsFor(id, fill, point.intensity, random);
+    final districtName = _districtName(point.districtId);
+
+    // Pontos mais movimentados enchem mais rápido (pontos percentuais por dia).
+    final fillPerDay = (5 + point.intensity * 1.6 + random.nextInt(5)).round();
+    // A lixeira foi esvaziada quando estava em 0%, há fill / ritmo dias.
+    final hoursSinceCollection = max(2, (fill / fillPerDay * 24).round());
+    // Lixeiras sem sinal pararam de enviar leituras há mais de 12 horas.
+    final silence = status == BinStatus.offline
+        ? Duration(hours: 14 + random.nextInt(40))
+        : Duration(minutes: 5 + random.nextInt(50));
+    final lastSignalAt = now.subtract(silence);
+
+    final readings = _readingsFor(
+      binId: id,
+      currentFill: fill,
+      fillPerDay: fillPerDay,
+      intensity: point.intensity,
+      lastSignalAt: lastSignalAt,
+      anomaly: _anomalies[index],
+      collectionFactor: _collectionDrops[districtName] ?? 1,
+      random: random,
+    );
     final byMaterial = <WasteMaterial, double>{
       for (final material in WasteMaterial.values)
         material: readings
             .take(30)
             .fold(0.0, (sum, reading) => sum + (reading.kgByMaterial[material] ?? 0)),
     };
-    final hoursSinceCollection = max(2, (fill / (10 + random.nextInt(8))) * 24).round();
     final isBusy = point.intensity >= SimulationConfig.busyPointIntensity;
     final side = number == 1 ? 1 : -1;
-    final districtName = _districtName(point.districtId);
 
     readingsOut[id] = readings;
     return Bin(
@@ -191,143 +223,63 @@ abstract final class MockData {
       totalKg: byMaterial.values.fold(0, (sum, kg) => sum + kg),
       kgByMaterial: byMaterial,
       lastCollection: now.subtract(Duration(hours: hoursSinceCollection)),
+      lastSignalAt: lastSignalAt,
     );
   }
 
-  /// Quanto cada lixeira coleta depende da intensidade do ponto onde está.
-  static List<Reading> _readingsFor(
-    String binId,
-    int currentFill,
-    int intensity,
-    Random random,
-  ) {
-    final perDay = 10 + random.nextInt(8);
+  /// Leituras diárias, da mais recente para a mais antiga. O enchimento sobe
+  /// [fillPerDay] pontos por dia e cai a ~0% a cada coleta; o volume de cada
+  /// material depende da intensidade do ponto.
+  static List<Reading> _readingsFor({
+    required String binId,
+    required int currentFill,
+    required int fillPerDay,
+    required int intensity,
+    required DateTime lastSignalAt,
+    required (WasteMaterial, int, double)? anomaly,
+    required double collectionFactor,
+    required Random random,
+  }) {
+    final today = DateTime(now.year, now.month, now.day);
+    final lastDay = DateTime(lastSignalAt.year, lastSignalAt.month, lastSignalAt.day);
+    // Quantos dias sem nenhuma leitura (só acontece com lixeiras sem sinal).
+    final firstDay = today.difference(lastDay).inDays;
     final scale = (0.25 + intensity * 0.12) * (0.85 + random.nextDouble() * 0.3);
-    return [
-      for (var day = 0; day < readingDays; day++)
-        Reading(
-          binId: binId,
-          date: DateTime(now.year, now.month, now.day).subtract(Duration(days: day)),
-          fillPercent: (((currentFill - day * perDay) % 100) + 100).round() % 100,
-          kgByMaterial: {
-            WasteMaterial.plastic: (3 + random.nextDouble() * 4) * scale,
-            WasteMaterial.glass: (1.5 + random.nextDouble() * 3) * scale,
-            WasteMaterial.paper: (2.5 + random.nextDouble() * 3.5) * scale,
-            WasteMaterial.metal: (0.6 + random.nextDouble() * 1.4) * scale,
-          },
-        ),
-    ];
-  }
-
-  static List<Alert> _buildAlerts() {
-    final working = bins.where((bin) => bin.status.isWorking).toList();
-    final byFill = [...working]..sort((a, b) => b.fillPercent.compareTo(a.fillPercent));
-    final offline = bins.firstWhere((bin) => bin.status == BinStatus.offline);
-    final anomaly = working.firstWhere(
-      (bin) => bin.status == BinStatus.operating && !byFill.take(6).contains(bin),
-    );
-    final lowCollection = districts.firstWhere((district) => district.name == 'Itaquera');
-
-    List<double> fillTrend(Bin bin) => [
-          for (final reading in readingsByBin[bin.id]!.take(7).toList().reversed)
-            reading.fillPercent.toDouble(),
-        ];
-
-    Alert fillAlert(
-      String id,
-      Bin bin,
-      int hours,
-      AlertSeverity severity,
-      Confidence confidence,
-      AlertStatus status,
-      int minutesAgo,
-    ) {
-      return Alert(
-        id: id,
-        title: '${bin.name} deve encher em $hours h',
-        type: AlertType.fillPrediction,
-        severity: severity,
-        status: status,
-        confidence: confidence,
-        createdAt: now.subtract(Duration(minutes: minutesAgo)),
-        location: bin.address,
-        binId: bin.id,
-        detected:
-            'A lixeira está com ${bin.fillPercent}% de enchimento e enche cerca de 2% por hora. '
-            'No ritmo atual, ela fica cheia em aproximadamente $hours horas.',
-        evidence: fillTrend(bin),
-        evidenceLabel: 'Enchimento (%) nos últimos 7 dias',
-        rule: 'Alerta quando o enchimento passa de 80% ou quando a previsão de lotação é menor que 24 horas.',
-        confidenceReason: confidence == Confidence.high
-            ? 'O sensor enviou leituras todos os dias e o ritmo de enchimento é parecido com o das últimas semanas.'
-            : 'Algumas leituras recentes variaram bastante, então a previsão pode mudar.',
-        limitations:
-            'A previsão não considera feriados, eventos na região nem coletas extras já programadas.',
-        suggestedAction:
-            'Priorize a coleta desta lixeira ainda hoje. Se já foi coletada, marque como resolvido.',
-      );
-    }
 
     return [
-      fillAlert('alert-01', byFill[0], 3, AlertSeverity.critical, Confidence.high, AlertStatus.open, 25),
-      fillAlert('alert-02', byFill[1], 5, AlertSeverity.critical, Confidence.high, AlertStatus.inAnalysis, 70),
-      fillAlert('alert-03', byFill[2], 9, AlertSeverity.high, Confidence.medium, AlertStatus.open, 140),
-      fillAlert('alert-04', byFill[3], 14, AlertSeverity.medium, Confidence.medium, AlertStatus.open, 380),
-      Alert(
-        id: 'alert-05',
-        title: '${offline.name} está sem sinal',
-        type: AlertType.offline,
-        severity: AlertSeverity.high,
-        status: AlertStatus.open,
-        confidence: Confidence.high,
-        createdAt: now.subtract(const Duration(hours: 18)),
-        location: offline.address,
-        binId: offline.id,
-        detected: 'O sensor não envia leituras há 18 horas.',
-        evidence: [for (var i = 0; i < 7; i++) i < 5 ? 1.0 : 0.0],
-        evidenceLabel: 'Leituras recebidas por dia (1 = recebeu)',
-        rule: 'Alerta quando não chega nenhuma leitura por mais de 12 horas.',
-        confidenceReason: 'A falha de comunicação é confirmada pela ausência total de leituras.',
-        limitations: 'Não sabemos se o problema é a bateria, o chip ou a lixeira.',
-        suggestedAction: 'Envie um fiscal para conferir o equipamento e registre uma vistoria.',
-      ),
-      Alert(
-        id: 'alert-06',
-        title: 'Aumento incomum de vidro em ${anomaly.name}',
-        type: AlertType.anomaly,
-        severity: AlertSeverity.medium,
-        status: AlertStatus.open,
-        confidence: Confidence.low,
-        createdAt: now.subtract(const Duration(hours: 9)),
-        location: anomaly.address,
-        binId: anomaly.id,
-        detected: 'A quantidade de vidro foi 2,4 vezes maior que a média dos últimos 30 dias.',
-        evidence: const [3.1, 2.8, 3.4, 2.9, 3.0, 7.4, 7.1],
-        evidenceLabel: 'Vidro coletado (kg) nos últimos 7 dias',
-        rule: 'Alerta quando um material passa de 2 vezes a média de 30 dias.',
-        confidenceReason: 'Foram só 2 dias fora do padrão. Pode ser um evento pontual.',
-        limitations: 'Não sabemos se houve festa, obra ou erro de leitura na região.',
-        suggestedAction: 'Acompanhe por mais 2 dias antes de tomar qualquer providência.',
-      ),
-      Alert(
-        id: 'alert-07',
-        title: 'Coleta abaixo do esperado em ${lowCollection.name}',
-        type: AlertType.lowCollection,
-        severity: AlertSeverity.low,
-        status: AlertStatus.open,
-        confidence: Confidence.medium,
-        createdAt: now.subtract(const Duration(days: 1, hours: 3)),
-        location: lowCollection.name,
-        detected: 'O volume coletado caiu 18% em relação às últimas 4 semanas.',
-        evidence: const [410, 395, 402, 388, 361, 340, 330],
-        evidenceLabel: 'Kg coletados por dia nos últimos 7 dias',
-        rule: 'Alerta quando o volume cai mais de 15% contra a média de 4 semanas.',
-        confidenceReason: 'A queda foi gradual e aparece em mais de uma lixeira.',
-        limitations: 'A queda pode ser por chuva forte ou por menos pessoas circulando.',
-        suggestedAction: 'Verifique se as lixeiras estão acessíveis e bem sinalizadas.',
-      ),
-      fillAlert('alert-08', byFill[4], 18, AlertSeverity.medium, Confidence.high, AlertStatus.resolved, 2000),
-      fillAlert('alert-09', byFill[5], 20, AlertSeverity.low, Confidence.low, AlertStatus.discarded, 2600),
+      for (var day = firstDay; day < readingDays; day++)
+        () {
+          final daysBack = day - firstDay;
+          final fill = daysBack == 0
+              ? currentFill
+              : (((currentFill - daysBack * fillPerDay) % 100) + random.nextInt(7) - 3)
+                  .clamp(0, 99);
+          // Quedas de coleta valem para a última semana; aumentos, para os últimos dias.
+          final factor = day < 7 ? collectionFactor : 1.0;
+
+          // [min] e [spread] definem o volume normal do dia. Nos dias de aumento
+          // incomum o volume fica perto da média, multiplicado pelo fator.
+          double kg(WasteMaterial material, double min, double spread) {
+            final draw = random.nextDouble();
+            final boosted = anomaly != null && anomaly.$1 == material && day < anomaly.$2;
+            final base = boosted
+                ? (min + spread / 2) * (0.92 + 0.16 * draw) * anomaly.$3
+                : min + spread * draw;
+            return base * scale * factor;
+          }
+
+          return Reading(
+            binId: binId,
+            date: today.subtract(Duration(days: day)),
+            fillPercent: fill,
+            kgByMaterial: {
+              WasteMaterial.plastic: kg(WasteMaterial.plastic, 3, 4),
+              WasteMaterial.glass: kg(WasteMaterial.glass, 1.5, 3),
+              WasteMaterial.paper: kg(WasteMaterial.paper, 2.5, 3.5),
+              WasteMaterial.metal: kg(WasteMaterial.metal, 0.6, 1.4),
+            },
+          );
+        }(),
     ];
   }
 }

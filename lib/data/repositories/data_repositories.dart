@@ -26,7 +26,8 @@ abstract interface class DistrictRepository {
 }
 
 abstract interface class AlertRepository {
-  Future<List<Alert>> fetchAlerts();
+  /// [fillThreshold] é o enchimento (%) a partir do qual uma lixeira gera alerta.
+  Future<List<Alert>> fetchAlerts({required int fillThreshold});
 
   Future<Alert> updateStatus(String alertId, AlertStatus status);
 }

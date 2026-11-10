@@ -1,6 +1,5 @@
 import 'package:recicla_radar_sp/data/mock/mock_data.dart';
 import 'package:recicla_radar_sp/data/mock/simulation_config.dart';
-import 'package:recicla_radar_sp/data/models/alert.dart';
 import 'package:recicla_radar_sp/data/models/bin.dart';
 import 'package:recicla_radar_sp/data/models/disposal_point.dart';
 import 'package:recicla_radar_sp/data/models/district.dart';
@@ -40,25 +39,6 @@ class MockDistrictRepository implements DistrictRepository {
   Future<List<District>> fetchDistricts() async {
     await _simulateNetwork();
     return MockData.districts;
-  }
-}
-
-class MockAlertRepository implements AlertRepository {
-  final List<Alert> _alerts = [...MockData.alerts];
-
-  @override
-  Future<List<Alert>> fetchAlerts() async {
-    await _simulateNetwork();
-    return List.unmodifiable(_alerts);
-  }
-
-  @override
-  Future<Alert> updateStatus(String alertId, AlertStatus status) async {
-    await _simulateNetwork();
-    final index = _alerts.indexWhere((alert) => alert.id == alertId);
-    final updated = _alerts[index].copyWith(status: status);
-    _alerts[index] = updated;
-    return updated;
   }
 }
 

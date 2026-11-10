@@ -34,7 +34,7 @@ Outros comandos úteis:
 
 ```bash
 flutter analyze        # análise estática
-flutter test           # testes (validadores, regra de alerta, contraste, navegação)
+flutter test           # testes (validadores, alertas, contraste, navegação, mapas)
 flutter build apk --debug
 ```
 
@@ -96,6 +96,27 @@ chave de API), `fl_chart`, `shared_preferences`, `http`.
   `python tool/gerar_distritos.py`, que consulta o OpenStreetMap uma vez para sortear os
   pontos dentro de cada distrito.
 - Os dados do mapa são © colaboradores do OpenStreetMap, licença ODbL.
+
+## Alertas
+
+Os alertas são calculados a partir dos dados das lixeiras (`lib/domain/alert_engine.dart`) e
+só sugerem: a decisão (em análise, resolvido ou descartado) é de uma pessoa e fica salva no
+aparelho (`shared_preferences`), então não se perde ao fechar o app.
+
+| Alerta | Dispara quando | Gravidade |
+| --- | --- | --- |
+| Previsão de enchimento | Enchimento acima do limiar das Configurações (padrão 80%) ou lotação prevista em até 24 h | Crítica até 4 h, alta até 12 h, média até 24 h |
+| Sem sinal | Nenhuma leitura há mais de 12 h | Alta; crítica acima de 48 h |
+| Leitura fora do padrão | Um material passa de 2 vezes a média de 30 dias, por 2 dias seguidos ou mais | Média; alta a partir de 3 vezes |
+| Coleta abaixo do esperado | Volume do distrito em 7 dias cai mais de 15% contra a média das 4 semanas anteriores | Média; alta acima de 30% |
+| Demanda alta com pouca cobertura | Índice de demanda 85 ou mais e no máximo 2 lixeiras funcionando | Média; alta sem nenhuma |
+
+- O ritmo de enchimento vem das leituras desde a última coleta. Com menos de 4 leituras o app
+  não prevê o tempo e avisa que não há dados suficientes.
+- A confiança depende dos dados: quantidade de leituras e regularidade do ritmo (enchimento),
+  dias seguidos (leitura fora do padrão) e quantas lixeiras do distrito tiveram queda (coleta).
+- Cada alerta mostra a evidência, a regra aplicada, o motivo da confiança e as limitações.
+- Mudar o limiar de enchimento nas Configurações recalcula os alertas.
 
 ## Acessibilidade
 

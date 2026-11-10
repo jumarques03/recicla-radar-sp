@@ -11,14 +11,17 @@ import 'package:recicla_radar_sp/core/theme/app_spacing.dart';
 import 'package:recicla_radar_sp/core/widgets/map_attribution.dart';
 import 'package:recicla_radar_sp/core/widgets/settings_action.dart';
 import 'package:recicla_radar_sp/core/widgets/state_views.dart';
+import 'package:recicla_radar_sp/core/widgets/status_badges.dart';
 import 'package:recicla_radar_sp/data/models/bin.dart';
 import 'package:recicla_radar_sp/data/models/disposal_point.dart';
+import 'package:recicla_radar_sp/data/models/district.dart';
 import 'package:recicla_radar_sp/features/bins_map/bin_card.dart';
 import 'package:recicla_radar_sp/features/bins_map/bin_map_layers.dart';
 import 'package:recicla_radar_sp/features/bins_map/bin_marker.dart';
 import 'package:recicla_radar_sp/features/bins_map/bin_preview_sheet.dart';
 import 'package:recicla_radar_sp/state/bins_provider.dart';
 import 'package:recicla_radar_sp/state/boundaries_provider.dart';
+import 'package:recicla_radar_sp/state/districts_provider.dart';
 
 class BinsScreen extends StatefulWidget {
   const BinsScreen({super.key});
@@ -80,6 +83,10 @@ class _BinsMap extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final boundaries = context.watch<BoundariesProvider>().boundaries;
+    final districts = {
+      for (final district in context.watch<DistrictsProvider>().data ?? const <District>[])
+        district.id: district,
+    };
 
     return Stack(
       children: [
@@ -89,7 +96,12 @@ class _BinsMap extends StatelessWidget {
             SpMap.tileLayer(),
             if (boundaries != null) ...[
               CityLayers.dimOutside(boundaries),
-              CityLayers.districtBorders(boundaries, width: 1),
+              CityLayers.districtFills(
+                boundaries,
+                colorFor: (id) => districts[id]?.level.color(context),
+                alpha: 0.3,
+                borderWidth: 1,
+              ),
               ...CityLayers.outline(boundaries),
             ],
             DisposalPointLayer(points: points),

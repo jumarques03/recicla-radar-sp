@@ -2,7 +2,8 @@ enum AlertType {
   fillPrediction('Previsão de enchimento'),
   anomaly('Leitura fora do padrão'),
   offline('Sem sinal'),
-  lowCollection('Coleta abaixo do esperado');
+  lowCollection('Coleta abaixo do esperado'),
+  lowCoverage('Demanda sem cobertura');
 
   const AlertType(this.label);
   final String label;

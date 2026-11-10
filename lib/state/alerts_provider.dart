@@ -1,17 +1,26 @@
+import 'dart:async';
+
 import 'package:recicla_radar_sp/data/models/alert.dart';
 import 'package:recicla_radar_sp/data/repositories/data_repositories.dart';
 import 'package:recicla_radar_sp/state/loadable_notifier.dart';
 
+/// Alertas calculados a partir dos dados. Recalcula sozinho quando a pessoa
+/// muda o limiar de enchimento nas Configurações.
 class AlertsProvider extends LoadableNotifier<List<Alert>> {
-  AlertsProvider(this._repository);
+  AlertsProvider(this._repository, [this._fillThreshold = 80]);
 
   final AlertRepository _repository;
+  int _fillThreshold;
+
+  void applyThreshold(int fillThreshold) {
+    if (fillThreshold == _fillThreshold) return;
+    _fillThreshold = fillThreshold;
+    // Adiado para não notificar durante a construção da árvore de widgets.
+    scheduleMicrotask(load);
+  }
 
   @override
-  Future<List<Alert>> fetch() async {
-    final alerts = await _repository.fetchAlerts();
-    return [...alerts]..sort((a, b) => b.createdAt.compareTo(a.createdAt));
-  }
+  Future<List<Alert>> fetch() => _repository.fetchAlerts(fillThreshold: _fillThreshold);
 
   Alert? byId(String id) {
     for (final alert in data ?? const <Alert>[]) {
