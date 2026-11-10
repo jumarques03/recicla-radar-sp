@@ -5,15 +5,20 @@ import 'package:recicla_radar_sp/data/models/alert.dart';
 
 /// Filtros escolhidos na lista de alertas. `null` significa "todos".
 class AlertFilters {
-  const AlertFilters({this.type, this.severity, this.status});
+  const AlertFilters({this.type, this.severity, this.status, this.onlyNew = false});
 
   final AlertType? type;
   final AlertSeverity? severity;
   final AlertStatus? status;
 
-  int get activeCount => [type, severity, status].where((f) => f != null).length;
+  /// Mostra só os alertas que a pessoa ainda não viu.
+  final bool onlyNew;
 
-  bool matches(Alert alert) =>
+  int get activeCount =>
+      [type, severity, status].where((f) => f != null).length + (onlyNew ? 1 : 0);
+
+  bool matches(Alert alert, {required bool Function(String id) isSeen}) =>
+      (!onlyNew || !isSeen(alert.id)) &&
       (type == null || alert.type == type) &&
       (severity == null || alert.severity == severity) &&
       (status == null || alert.status == status);
@@ -25,11 +30,13 @@ class AlertFilters {
     bool clearType = false,
     bool clearSeverity = false,
     bool clearStatus = false,
+    bool? onlyNew,
   }) {
     return AlertFilters(
       type: clearType ? null : (type ?? this.type),
       severity: clearSeverity ? null : (severity ?? this.severity),
       status: clearStatus ? null : (status ?? this.status),
+      onlyNew: onlyNew ?? this.onlyNew,
     );
   }
 }
@@ -57,6 +64,13 @@ class AlertFilterPanel extends StatelessWidget {
         ),
         expandedCrossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Mostrar só os novos'),
+            subtitle: const Text('Alertas que você ainda não viu'),
+            value: filters.onlyNew,
+            onChanged: (value) => onChanged(filters.copyWith(onlyNew: value)),
+          ),
           _FilterGroup<AlertType>(
             title: 'Tipo',
             values: AlertType.values,

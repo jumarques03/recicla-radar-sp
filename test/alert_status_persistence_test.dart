@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:recicla_radar_sp/data/local/alert_seen_store.dart';
 import 'package:recicla_radar_sp/data/local/alert_status_store.dart';
 import 'package:recicla_radar_sp/data/models/alert.dart';
 import 'package:recicla_radar_sp/data/repositories/data_repositories.dart';
@@ -74,10 +75,83 @@ void main() {
     });
   });
 
+  group('alertas vistos', () {
+    Future<AlertsProvider> providerOn(SharedPreferences prefs, {int threshold = 80}) async {
+      final provider = AlertsProvider(
+        EngineAlertRepository(SharedPrefsAlertStatusStore(prefs)),
+        SharedPrefsAlertSeenStore(prefs),
+        threshold,
+      );
+      await provider.load();
+      return provider;
+    }
+
+    test('no início todos os alertas ativos são novos', () async {
+      final provider = await providerOn(await freshPrefs());
+      expect(provider.unseenCount, provider.activeCount);
+      expect(provider.unseenCount, greaterThan(0));
+    });
+
+    test('marcar um alerta como visto tira ele da contagem, e continua depois de reabrir', () async {
+      final prefs = await freshPrefs();
+      final provider = await providerOn(prefs);
+      final before = provider.unseenCount;
+      final target = provider.data!.first;
+
+      await provider.markSeen(target.id);
+      expect(provider.isSeen(target.id), isTrue);
+      expect(provider.unseenCount, before - 1);
+
+      final reopened = await providerOn(prefs);
+      expect(reopened.isSeen(target.id), isTrue);
+      expect(reopened.unseenCount, before - 1);
+    });
+
+    test('marcar todos como vistos zera o selo e dá para desfazer', () async {
+      final prefs = await freshPrefs();
+      final provider = await providerOn(prefs);
+      final before = provider.unseenCount;
+
+      final marked = await provider.markAllSeen();
+      expect(provider.unseenCount, 0);
+      expect(marked.length, greaterThanOrEqualTo(before));
+
+      await provider.markUnseen(marked);
+      expect(provider.unseenCount, before);
+      expect((await providerOn(prefs)).unseenCount, before);
+    });
+
+    test('decidir sobre um alerta não o torna visto, e alerta resolvido não conta no selo', () async {
+      final provider = await providerOn(await freshPrefs());
+      final before = provider.unseenCount;
+      final target = provider.data!.first;
+
+      await provider.updateStatus(target.id, AlertStatus.resolved);
+      expect(provider.isSeen(target.id), isFalse);
+      expect(provider.unseenCount, before - 1);
+    });
+
+    test('alertas novos que surgem ao baixar o limiar aparecem como não vistos', () async {
+      final prefs = await freshPrefs();
+      final strict = await providerOn(prefs);
+      await strict.markAllSeen();
+      expect(strict.unseenCount, 0);
+
+      final loose = await providerOn(prefs, threshold: 60);
+      expect(loose.unseenCount, greaterThan(0));
+    });
+
+    test('o armazenamento guarda e devolve os ids', () async {
+      final prefs = await freshPrefs();
+      await SharedPrefsAlertSeenStore(prefs).save({'a', 'b'});
+      expect(SharedPrefsAlertSeenStore(prefs).load(), {'a', 'b'});
+    });
+  });
+
   group('AlertsProvider', () {
     test('recalcula quando o limiar muda e não recalcula se ficou igual', () async {
       final repository = _RecordingRepository();
-      final provider = AlertsProvider(repository, 80);
+      final provider = AlertsProvider(repository, SharedPrefsAlertSeenStore(await freshPrefs()), 80);
 
       await provider.load();
       expect(repository.thresholds, [80]);

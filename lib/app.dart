@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:recicla_radar_sp/core/router/app_router.dart';
 import 'package:recicla_radar_sp/core/theme/dark_theme.dart';
 import 'package:recicla_radar_sp/core/theme/light_theme.dart';
+import 'package:recicla_radar_sp/data/local/alert_seen_store.dart';
 import 'package:recicla_radar_sp/data/local/alert_status_store.dart';
 import 'package:recicla_radar_sp/data/mock/district_seeds.dart';
 import 'package:recicla_radar_sp/data/osm/osm_boundary_repository.dart';
@@ -36,6 +37,7 @@ class ReciclaRadarApp extends StatelessWidget {
     this.binRepository,
     this.districtRepository,
     this.alertRepository,
+    this.alertSeenStore,
     this.inspectionRepository,
     this.overviewRepository,
     this.boundaryRepository,
@@ -46,6 +48,7 @@ class ReciclaRadarApp extends StatelessWidget {
   final BinRepository? binRepository;
   final DistrictRepository? districtRepository;
   final AlertRepository? alertRepository;
+  final AlertSeenStore? alertSeenStore;
   final InspectionRepository? inspectionRepository;
   final OverviewRepository? overviewRepository;
   final BoundaryRepository? boundaryRepository;
@@ -78,6 +81,7 @@ class ReciclaRadarApp extends StatelessWidget {
         ChangeNotifierProxyProvider<SettingsProvider, AlertsProvider>(
           create: (context) => AlertsProvider(
             alertRepository ?? EngineAlertRepository(SharedPrefsAlertStatusStore(prefs)),
+            alertSeenStore ?? SharedPrefsAlertSeenStore(prefs),
             context.read<SettingsProvider>().fillThreshold,
           )..load(),
           update: (_, settings, alerts) => alerts!..applyThreshold(settings.fillThreshold),

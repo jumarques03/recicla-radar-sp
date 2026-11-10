@@ -12,7 +12,7 @@ class HomeShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final activeAlerts = context.select<AlertsProvider, int>((p) => p.activeCount);
+    final newAlerts = context.select<AlertsProvider, int>((p) => p.unseenCount);
 
     return Scaffold(
       body: shell,
@@ -41,17 +41,17 @@ class HomeShell extends StatelessWidget {
           ),
           NavigationDestination(
             icon: Badge.count(
-              count: activeAlerts,
-              isLabelVisible: activeAlerts > 0,
+              count: newAlerts,
+              isLabelVisible: newAlerts > 0,
               child: const Icon(Icons.notifications_outlined),
             ),
             selectedIcon: Badge.count(
-              count: activeAlerts,
-              isLabelVisible: activeAlerts > 0,
+              count: newAlerts,
+              isLabelVisible: newAlerts > 0,
               child: const Icon(Icons.notifications),
             ),
             label: 'Alertas',
-            tooltip: activeAlerts > 0 ? 'Alertas, $activeAlerts ativos' : 'Alertas',
+            tooltip: newAlerts > 0 ? 'Alertas, $newAlerts novos' : 'Alertas',
           ),
         ],
       ),

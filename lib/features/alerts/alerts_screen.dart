@@ -23,6 +23,20 @@ class _AlertsScreenState extends State<AlertsScreen> {
   // Filtros são estado local: só valem enquanto esta tela está aberta.
   AlertFilters _filters = const AlertFilters();
 
+  Future<void> _markAllSeen(AlertsProvider alerts) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final marked = await alerts.markAllSeen();
+    if (!mounted) return;
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(
+        content: Text(marked.length == 1
+            ? '1 alerta marcado como visto.'
+            : '${marked.length} alertas marcados como vistos.'),
+        action: SnackBarAction(label: 'Desfazer', onPressed: () => alerts.markUnseen(marked)),
+      ));
+  }
+
   @override
   Widget build(BuildContext context) {
     final alerts = context.watch<AlertsProvider>();
@@ -30,7 +44,16 @@ class _AlertsScreenState extends State<AlertsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Alertas'),
-        actions: const [SettingsAction()],
+        actions: [
+          IconButton(
+            tooltip: alerts.unseenCount > 0
+                ? 'Marcar os ${alerts.unseenCount} alertas novos como vistos'
+                : 'Nenhum alerta novo',
+            icon: const Icon(Icons.done_all),
+            onPressed: alerts.unseenCount > 0 ? () => _markAllSeen(alerts) : null,
+          ),
+          const SettingsAction(),
+        ],
       ),
       body: Column(
         children: [
@@ -46,7 +69,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
               emptyTitle: 'Nenhum alerta por enquanto',
               emptyMessage: 'Quando o sistema perceber algo, o aviso aparece aqui.',
               builder: (context, list) {
-                final visible = list.where(_filters.matches).toList();
+                final visible = list.where((a) => _filters.matches(a, isSeen: alerts.isSeen)).toList();
                 if (visible.isEmpty) {
                   return EmptyView(
                     title: 'Nenhum alerta com esses filtros',
@@ -62,6 +85,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
                     separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.sm + 4),
                     itemBuilder: (context, index) => AlertCard(
                       alert: visible[index],
+                      isNew: visible[index].status.isActive && !alerts.isSeen(visible[index].id),
                       onTap: () => context.pushNamed(
                         AppRoutes.alert,
                         pathParameters: {'id': visible[index].id},

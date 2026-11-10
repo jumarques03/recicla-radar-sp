@@ -4,12 +4,16 @@ import 'package:recicla_radar_sp/core/theme/app_spacing.dart';
 import 'package:recicla_radar_sp/core/utils/formatters.dart';
 import 'package:recicla_radar_sp/core/widgets/app_card.dart';
 import 'package:recicla_radar_sp/core/widgets/status_badges.dart';
+import 'package:recicla_radar_sp/core/widgets/status_chip.dart';
 import 'package:recicla_radar_sp/data/models/alert.dart';
 
 class AlertCard extends StatelessWidget {
-  const AlertCard({super.key, required this.alert, required this.onTap});
+  const AlertCard({super.key, required this.alert, required this.onTap, this.isNew = false});
 
   final Alert alert;
+
+  /// Ainda não foi visto pela pessoa.
+  final bool isNew;
   final VoidCallback onTap;
 
   @override
@@ -17,7 +21,7 @@ class AlertCard extends StatelessWidget {
     final theme = Theme.of(context);
     return AppCard(
       onTap: onTap,
-      semanticLabel: '${alert.title}. ${alert.location}. '
+      semanticLabel: '${isNew ? 'Novo. ' : ''}${alert.title}. ${alert.location}. '
           'Gravidade ${alert.severity.label.toLowerCase()}. '
           'Confiança ${alert.confidence.label}. ${alert.status.label}. '
           '${Formatters.timeAgo(alert.createdAt)}.',
@@ -28,6 +32,12 @@ class AlertCard extends StatelessWidget {
             spacing: AppSpacing.sm,
             runSpacing: AppSpacing.sm,
             children: [
+              if (isNew)
+                StatusChip(
+                  icon: Icons.fiber_manual_record,
+                  label: 'Novo',
+                  color: Theme.of(context).colorScheme.primary,
+                ),
               SeverityChip(alert.severity),
               ConfidenceChip(alert.confidence),
             ],

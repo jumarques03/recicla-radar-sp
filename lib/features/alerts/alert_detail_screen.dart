@@ -25,6 +25,15 @@ class AlertDetailScreen extends StatefulWidget {
 class _AlertDetailScreenState extends State<AlertDetailScreen> {
   bool _saving = false;
 
+  @override
+  void initState() {
+    super.initState();
+    // Abrir o alerta já conta como ter visto.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) context.read<AlertsProvider>().markSeen(widget.alertId);
+    });
+  }
+
   Future<void> _decide(AlertStatus status) async {
     final provider = context.read<AlertsProvider>();
     final messenger = ScaffoldMessenger.of(context);
