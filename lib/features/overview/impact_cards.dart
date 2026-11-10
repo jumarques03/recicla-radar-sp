@@ -50,11 +50,30 @@ class ImpactStatGrid extends StatelessWidget {
       builder: (context, constraints) {
         final fontScale = MediaQuery.textScalerOf(context).scale(16) / 16;
         final columns = fontScale > 1.3 ? 1 : (constraints.maxWidth >= 640 ? 4 : 2);
-        final width = (constraints.maxWidth - AppSpacing.md * (columns - 1)) / columns;
-        return Wrap(
-          spacing: AppSpacing.md,
-          runSpacing: AppSpacing.md,
-          children: [for (final card in cards) SizedBox(width: width, child: card)],
+
+        // Uma linha de cada vez, para os cards da mesma linha terem a mesma altura.
+        final rows = <Widget>[];
+        for (var start = 0; start < cards.length; start += columns) {
+          final end = (start + columns).clamp(0, cards.length);
+          rows.add(IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (var i = start; i < start + columns; i++) ...[
+                  if (i > start) const SizedBox(width: AppSpacing.md),
+                  Expanded(child: i < end ? cards[i] : const SizedBox.shrink()),
+                ],
+              ],
+            ),
+          ));
+        }
+        return Column(
+          children: [
+            for (var i = 0; i < rows.length; i++) ...[
+              if (i > 0) const SizedBox(height: AppSpacing.md),
+              rows[i],
+            ],
+          ],
         );
       },
     );

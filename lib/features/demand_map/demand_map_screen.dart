@@ -129,9 +129,9 @@ class _DemandMap extends StatefulWidget {
 class _DemandMapState extends State<_DemandMap> {
   final LayerHitNotifier<String> _hit = ValueNotifier<LayerHitResult<String>?>(null);
 
-  /// Com o mapa mais afastado que isso, só as cores aparecem; os números dos
-  /// distritos entram ao aproximar, para o mapa não ficar poluído.
-  static const double _labelsMinZoom = 12.5;
+  /// Com o mapa mais afastado que isso, os distritos são bolinhas pequenas;
+  /// a partir daqui elas crescem e mostram o número do índice.
+  static const double _fullDotsZoom = 11.5;
 
   @override
   void dispose() {
@@ -198,9 +198,7 @@ class _DemandMapState extends State<_DemandMap> {
             ],
             _DistrictLabels(
               districts: widget.districts,
-              // Sem os limites no mapa, os círculos são a única forma de tocar nos distritos.
-              alwaysVisible: boundaries == null,
-              minZoom: _labelsMinZoom,
+              fullZoom: _fullDotsZoom,
               onTap: widget.onOpen,
             ),
             const MapAttribution(),
@@ -218,31 +216,33 @@ class _DemandMapState extends State<_DemandMap> {
   }
 }
 
+/// Pontos dos distritos. Sempre aparecem; o tamanho e o texto dependem do zoom.
 class _DistrictLabels extends StatelessWidget {
-  const _DistrictLabels({
-    required this.districts,
-    required this.alwaysVisible,
-    required this.minZoom,
-    required this.onTap,
-  });
+  const _DistrictLabels({required this.districts, required this.fullZoom, required this.onTap});
 
   final List<District> districts;
-  final bool alwaysVisible;
-  final double minZoom;
+
+  /// A partir deste zoom os pontos ficam maiores e mostram o índice.
+  final double fullZoom;
   final ValueChanged<District> onTap;
 
   @override
   Widget build(BuildContext context) {
-    if (!alwaysVisible && MapCamera.of(context).zoom < minZoom) return const SizedBox.shrink();
+    final compact = MapCamera.of(context).zoom < fullZoom;
+    final size = DemandBubble.markerSize(compact: compact);
 
     return MarkerLayer(
       markers: [
         for (final district in districts)
           Marker(
             point: district.position,
-            width: DemandBubble.size,
-            height: DemandBubble.size,
-            child: DemandBubble(district: district, onTap: () => onTap(district)),
+            width: size,
+            height: size,
+            child: DemandBubble(
+              district: district,
+              compact: compact,
+              onTap: () => onTap(district),
+            ),
           ),
       ],
     );

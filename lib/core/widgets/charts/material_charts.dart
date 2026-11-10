@@ -43,10 +43,10 @@ class MaterialBarChart extends StatelessWidget {
           leftTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              reservedSize: 52,
+              reservedSize: 60,
               getTitlesWidget: (value, meta) {
                 if (value == meta.max) return const SizedBox.shrink();
-                return Text(Formatters.compactKg(value), style: labelStyle);
+                return Text(Formatters.compactKg(value), style: labelStyle, softWrap: false);
               },
             ),
           ),
@@ -57,6 +57,17 @@ class MaterialBarChart extends StatelessWidget {
               getTitlesWidget: (value, meta) => Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(materials[value.toInt()].label, style: labelStyle),
+              ),
+            ),
+          ),
+        ),
+        barTouchData: BarTouchData(
+          touchTooltipData: BarTouchTooltipData(
+            getTooltipItem: (group, groupIndex, rod, rodIndex) => BarTooltipItem(
+              '${materials[group.x].label}\n${Formatters.kg(rod.toY)}',
+              TextStyle(
+                color: theme.colorScheme.onInverseSurface,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),
@@ -105,8 +116,8 @@ class MaterialPieChart extends StatelessWidget {
                   value: value,
                   color: color,
                   radius: 64,
-                  title: Formatters.percent(value / total * 100),
-                  titleStyle: theme.textTheme.labelLarge?.copyWith(color: onColorFor(color)),
+                  title: Formatters.percentDecimal(value / total * 100),
+                  titleStyle: theme.textTheme.labelMedium?.copyWith(color: onColorFor(color)),
                 );
               }(),
         ],

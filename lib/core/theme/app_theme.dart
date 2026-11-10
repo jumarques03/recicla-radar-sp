@@ -94,7 +94,7 @@ ThemeData buildAppTheme({
     ),
     chipTheme: base.chipTheme.copyWith(
       labelStyle: textTheme.labelLarge,
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.sm),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
       shape: const RoundedRectangleBorder(borderRadius: AppRadius.control),
       side: BorderSide(color: scheme.outline),
     ),

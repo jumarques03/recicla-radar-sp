@@ -107,6 +107,7 @@ class _SummaryContent extends StatelessWidget {
             labels: [for (final point in series) point.label],
             values: [for (final point in series) point.value],
             formatY: Formatters.compactKg,
+            formatTooltip: Formatters.kg,
           ),
         ),
         const SectionTitle('Por tipo de material'),

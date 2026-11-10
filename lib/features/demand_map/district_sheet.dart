@@ -65,6 +65,7 @@ class DistrictSheet extends StatelessWidget {
                 labels: [for (var i = 0; i < weeks; i++) 'S${i + 1}'],
                 values: [for (final value in district.history) value.toDouble()],
                 maxY: 100,
+                formatTooltip: (v) => 'Índice ${v.round()}',
               ),
             ),
             const SizedBox(height: AppSpacing.md),

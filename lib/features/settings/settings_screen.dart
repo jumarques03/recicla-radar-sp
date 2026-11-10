@@ -69,6 +69,8 @@ class SettingsScreen extends StatelessWidget {
                       label: Text('Escuro'),
                     ),
                   ],
+                  // O ícone de cada opção já mostra qual é; sem o "visto" cabe em telas estreitas.
+                  showSelectedIcon: false,
                   selected: {settings.themeMode},
                   onSelectionChanged: (values) => settings.setThemeMode(values.first),
                 ),

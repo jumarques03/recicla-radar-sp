@@ -1,23 +1,36 @@
 import 'package:flutter/material.dart';
 
 import 'package:recicla_radar_sp/core/theme/app_colors.dart';
-import 'package:recicla_radar_sp/data/models/district.dart';
 import 'package:recicla_radar_sp/core/widgets/status_badges.dart';
+import 'package:recicla_radar_sp/data/models/district.dart';
 
-/// Círculo de um distrito no mapa: cor pelo nível, ícone e número do índice.
+/// Ponto de um distrito no mapa. Com o mapa afastado é só uma bolinha colorida;
+/// ao aproximar, mostra o ícone do nível e o número do índice.
 class DemandBubble extends StatelessWidget {
-  const DemandBubble({super.key, required this.district, required this.onTap});
+  const DemandBubble({
+    super.key,
+    required this.district,
+    required this.onTap,
+    required this.compact,
+  });
 
   final District district;
   final VoidCallback onTap;
 
-  /// Tamanho fixo, do tamanho de um alvo de toque.
-  static const double size = 48;
+  /// `true` para a bolinha pequena, sem texto.
+  final bool compact;
+
+  /// Área do marcador no mapa (a parte que recebe o toque).
+  static double markerSize({required bool compact}) => compact ? 24 : 40;
+
+  /// Tamanho do círculo desenhado.
+  static double dotSize({required bool compact}) => compact ? 16 : 34;
 
   @override
   Widget build(BuildContext context) {
     final color = district.level.color(context);
     final foreground = onColorFor(color);
+    final dot = dotSize(compact: compact);
 
     return Semantics(
       button: true,
@@ -28,28 +41,37 @@ class DemandBubble extends StatelessWidget {
         message: district.name,
         child: GestureDetector(
           onTap: onTap,
-          child: Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: color.withValues(alpha: 0.92),
-              border: Border.all(color: foreground, width: 2),
-            ),
-            padding: const EdgeInsets.all(6),
-            child: FittedBox(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(district.level.icon, color: foreground, size: 18),
-                  Text(
-                    '${district.demandIndex}',
-                    style: TextStyle(
-                      color: foreground,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 18,
-                    ),
-                  ),
-                ],
+          behavior: HitTestBehavior.opaque,
+          child: Center(
+            child: Container(
+              width: dot,
+              height: dot,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: color,
+                border: Border.all(color: foreground, width: compact ? 1.5 : 2),
               ),
+              child: compact
+                  ? null
+                  : FittedBox(
+                      child: Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(district.level.icon, color: foreground, size: 14),
+                            Text(
+                              '${district.demandIndex}',
+                              style: TextStyle(
+                                color: foreground,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
             ),
           ),
         ),

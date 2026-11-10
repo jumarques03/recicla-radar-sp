@@ -12,7 +12,11 @@ class BinMarker extends StatelessWidget {
   final Bin bin;
   final VoidCallback onTap;
 
-  static const double size = 56;
+  /// Área do marcador no mapa (a parte que recebe o toque).
+  static const double size = 46;
+
+  /// Tamanho do círculo desenhado, menor que a área de toque.
+  static const double dotSize = 36;
 
   @override
   Widget build(BuildContext context) {
@@ -28,27 +32,32 @@ class BinMarker extends StatelessWidget {
         message: bin.name,
         child: GestureDetector(
           onTap: onTap,
-          child: Container(
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-              border: Border.all(color: foreground, width: 2),
-            ),
-            padding: const EdgeInsets.all(6),
-            child: FittedBox(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(bin.status.icon, size: 18, color: foreground),
-                  Text(
-                    bin.status.isWorking ? '${bin.fillPercent}%' : '--',
-                    style: TextStyle(
-                      color: foreground,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 16,
+          behavior: HitTestBehavior.opaque,
+          child: Center(
+            child: Container(
+              width: dotSize,
+              height: dotSize,
+              decoration: BoxDecoration(
+                color: color,
+                shape: BoxShape.circle,
+                border: Border.all(color: foreground, width: 1.5),
+              ),
+              padding: const EdgeInsets.all(4),
+              child: FittedBox(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(bin.status.icon, size: 14, color: foreground),
+                    Text(
+                      bin.status.isWorking ? '${bin.fillPercent}%' : '--',
+                      style: TextStyle(
+                        color: foreground,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

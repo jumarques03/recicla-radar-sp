@@ -38,10 +38,11 @@ class StatCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.sm + 4),
           Text(label, style: theme.textTheme.bodyMedium),
           const SizedBox(height: AppSpacing.xs),
-          Text(
-            value,
-            style: theme.textTheme.headlineSmall,
-            softWrap: true,
+          // Se o número for largo, a letra diminui um pouco em vez de quebrar a linha.
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(value, style: theme.textTheme.headlineSmall, maxLines: 1),
           ),
           if (footnote != null) ...[
             const SizedBox(height: AppSpacing.xs),

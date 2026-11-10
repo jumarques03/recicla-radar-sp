@@ -138,6 +138,7 @@ class _BinDetailScreenState extends State<BinDetailScreen> {
                 values: values,
                 maxY: 100,
                 formatY: (v) => '${v.round()}%',
+                formatTooltip: (v) => '${v.round()}%',
               ),
             );
           },

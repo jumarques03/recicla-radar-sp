@@ -1,6 +1,8 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
+import 'package:recicla_radar_sp/core/utils/formatters.dart';
+
 /// Gráfico de linha simples com rótulos legíveis.
 class SimpleLineChart extends StatelessWidget {
   const SimpleLineChart({
@@ -9,12 +11,16 @@ class SimpleLineChart extends StatelessWidget {
     required this.values,
     this.maxY,
     this.formatY,
+    this.formatTooltip,
   });
 
   final List<String> labels;
   final List<double> values;
   final double? maxY;
   final String Function(double value)? formatY;
+
+  /// Texto do valor ao tocar num ponto. Sem isso, usa duas casas decimais.
+  final String Function(double value)? formatTooltip;
 
   @override
   Widget build(BuildContext context) {
@@ -23,6 +29,7 @@ class SimpleLineChart extends StatelessWidget {
     final labelStyle = theme.textTheme.bodySmall;
     final labelEvery = labels.length > 8 ? 2 : 1;
     String format(double v) => formatY?.call(v) ?? v.round().toString();
+    String tooltip(double v) => formatTooltip?.call(v) ?? Formatters.decimal(v);
 
     return LineChart(
       LineChartData(
@@ -40,12 +47,12 @@ class SimpleLineChart extends StatelessWidget {
           leftTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              reservedSize: 48,
+              reservedSize: 60,
               getTitlesWidget: (value, meta) {
                 if (value == meta.max || value == meta.min && value != 0) {
                   return const SizedBox.shrink();
                 }
-                return Text(format(value), style: labelStyle);
+                return Text(format(value), style: labelStyle, softWrap: false);
               },
             ),
           ),
@@ -78,7 +85,20 @@ class SimpleLineChart extends StatelessWidget {
             belowBarData: BarAreaData(show: true, color: color.withValues(alpha: 0.12)),
           ),
         ],
-        lineTouchData: const LineTouchData(),
+        lineTouchData: LineTouchData(
+          touchTooltipData: LineTouchTooltipData(
+            getTooltipItems: (spots) => [
+              for (final spot in spots)
+                LineTooltipItem(
+                  '${labels[spot.x.toInt()]}\n${tooltip(spot.y)}',
+                  TextStyle(
+                    color: theme.colorScheme.onInverseSurface,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }

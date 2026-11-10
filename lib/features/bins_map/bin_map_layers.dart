@@ -17,7 +17,7 @@ class BinClusterLayer extends StatelessWidget {
   final ValueChanged<Bin> onBinTap;
 
   /// Tamanho, em pixels da tela, da célula usada para juntar lixeiras.
-  static const double _cellSize = 72;
+  static const double _cellSize = 52;
 
   /// Com o mapa mais aproximado que isso, cada lixeira aparece sozinha.
   static const double _singleZoom = 16.5;
@@ -88,22 +88,27 @@ class _ClusterBubble extends StatelessWidget {
         message: '$count lixeiras',
         child: GestureDetector(
           onTap: onTap,
-          child: Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: scheme.primary,
-              border: Border.all(color: scheme.onPrimary, width: 2),
-            ),
-            alignment: Alignment.center,
-            child: FittedBox(
-              child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: Text(
-                  '$count',
-                  style: TextStyle(
-                    color: scheme.onPrimary,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 18,
+          behavior: HitTestBehavior.opaque,
+          child: Center(
+            child: Container(
+              width: BinMarker.dotSize,
+              height: BinMarker.dotSize,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: scheme.primary,
+                border: Border.all(color: scheme.onPrimary, width: 1.5),
+              ),
+              alignment: Alignment.center,
+              child: FittedBox(
+                child: Padding(
+                  padding: const EdgeInsets.all(6),
+                  child: Text(
+                    '$count',
+                    style: TextStyle(
+                      color: scheme.onPrimary,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 16,
+                    ),
                   ),
                 ),
               ),
@@ -123,7 +128,7 @@ class DisposalPointLayer extends StatelessWidget {
   final List<DisposalPoint> points;
 
   static const double minZoom = 14.5;
-  static const double _size = 30;
+  static const double _size = 24;
 
   @override
   Widget build(BuildContext context) {
@@ -150,7 +155,7 @@ class DisposalPointLayer extends StatelessWidget {
                   ),
                   child: Icon(
                     Icons.delete_sweep_outlined,
-                    size: 18,
+                    size: 14,
                     color: scheme.onSurface,
                   ),
                 ),
