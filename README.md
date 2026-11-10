@@ -14,12 +14,15 @@ back-end nem autenticação real.
 
 ## Como executar
 
-O app é feito **só para Android**. Requisitos: [Flutter](https://docs.flutter.dev/get-started/install)
-3.x, Android SDK e um emulador ou celular Android.
+O foco do app é o **Android**, que é a plataforma testada. O projeto também tem as pastas
+de iOS, web, Windows, Linux e macOS, mas elas não foram testadas. Requisitos:
+[Flutter](https://docs.flutter.dev/get-started/install) 3.x, Android SDK e um emulador ou
+celular Android.
 
 ```bash
 flutter pub get
-flutter run
+flutter devices          # mostra os dispositivos disponíveis
+flutter run -d <id>      # roda no dispositivo escolhido
 ```
 
 Para testar o login, use a conta de demonstração:
