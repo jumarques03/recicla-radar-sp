@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:recicla_radar_sp/core/router/app_router.dart';
 import 'package:recicla_radar_sp/core/theme/dark_theme.dart';
+import 'package:recicla_radar_sp/core/theme/high_contrast_theme.dart';
 import 'package:recicla_radar_sp/core/theme/light_theme.dart';
 import 'package:recicla_radar_sp/data/local/alert_seen_store.dart';
 import 'package:recicla_radar_sp/data/local/alert_status_store.dart';
@@ -120,8 +121,11 @@ class _AppViewState extends State<_AppView> {
     return MaterialApp.router(
       title: 'Recicla Radar SP',
       debugShowCheckedModeBanner: false,
-      theme: buildLightTheme(),
-      darkTheme: buildDarkTheme(),
+      theme: settings.highContrast ? buildHighContrastLightTheme() : buildLightTheme(),
+      darkTheme: settings.highContrast ? buildHighContrastDarkTheme() : buildDarkTheme(),
+      // Quando o aparelho pede texto em alto contraste, o app acompanha.
+      highContrastTheme: buildHighContrastLightTheme(),
+      highContrastDarkTheme: buildHighContrastDarkTheme(),
       themeMode: settings.themeMode,
       routerConfig: _router,
       locale: const Locale('pt', 'BR'),

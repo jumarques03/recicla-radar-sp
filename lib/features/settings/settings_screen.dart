@@ -80,7 +80,15 @@ class SettingsScreen extends StatelessWidget {
                   selected: {settings.themeMode},
                   onSelectionChanged: (values) => settings.setThemeMode(values.first),
                 ),
-                const SizedBox(height: AppSpacing.lg),
+                const SizedBox(height: AppSpacing.md),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  value: settings.highContrast,
+                  onChanged: settings.setHighContrast,
+                  title: const Text('Alto contraste'),
+                  subtitle: const Text('Cores mais fortes e bordas mais grossas, para ler melhor.'),
+                ),
+                const SizedBox(height: AppSpacing.md),
                 Text('Tamanho da letra', style: theme.textTheme.titleSmall),
                 Slider(
                   value: settings.textScale,

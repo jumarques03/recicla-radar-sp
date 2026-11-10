@@ -10,8 +10,12 @@ ThemeData buildAppTheme({
   required ColorScheme scheme,
   required StatusColors status,
   required Color cardColor,
+  bool highContrast = false,
 }) {
   final base = ThemeData(useMaterial3: true, colorScheme: scheme);
+  // No alto contraste as bordas ficam mais escuras e mais grossas.
+  final borderWidth = highContrast ? 2.0 : 1.0;
+  final softBorder = highContrast ? scheme.outline : scheme.outlineVariant;
   final textTheme = AppTypography.build(base.textTheme);
   const buttonShape = RoundedRectangleBorder(borderRadius: AppRadius.control);
   const buttonSize = Size(AppSpacing.minTouch, 56);
@@ -35,7 +39,7 @@ ThemeData buildAppTheme({
       margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
         borderRadius: AppRadius.card,
-        side: BorderSide(color: scheme.outlineVariant),
+        side: BorderSide(color: softBorder, width: borderWidth),
       ),
     ),
     filledButtonTheme: FilledButtonThemeData(
@@ -49,7 +53,7 @@ ThemeData buildAppTheme({
       style: OutlinedButton.styleFrom(
         minimumSize: buttonSize,
         shape: buttonShape,
-        side: BorderSide(color: scheme.outline),
+        side: BorderSide(color: scheme.outline, width: borderWidth),
         textStyle: textTheme.labelLarge,
       ),
     ),
@@ -72,11 +76,11 @@ ThemeData buildAppTheme({
       contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 18),
       border: OutlineInputBorder(
         borderRadius: AppRadius.control,
-        borderSide: BorderSide(color: scheme.outline),
+        borderSide: BorderSide(color: scheme.outline, width: borderWidth),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: AppRadius.control,
-        borderSide: BorderSide(color: scheme.outline),
+        borderSide: BorderSide(color: scheme.outline, width: borderWidth),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: AppRadius.control,
@@ -96,7 +100,7 @@ ThemeData buildAppTheme({
       labelStyle: textTheme.labelLarge,
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
       shape: const RoundedRectangleBorder(borderRadius: AppRadius.control),
-      side: BorderSide(color: scheme.outline),
+      side: BorderSide(color: scheme.outline, width: borderWidth),
     ),
     navigationBarTheme: NavigationBarThemeData(
       height: 80,
@@ -117,6 +121,6 @@ ThemeData buildAppTheme({
       shape: const RoundedRectangleBorder(borderRadius: AppRadius.sheet),
       showDragHandle: true,
     ),
-    dividerTheme: DividerThemeData(color: scheme.outlineVariant, space: 1),
+    dividerTheme: DividerThemeData(color: softBorder, space: 1),
   );
 }

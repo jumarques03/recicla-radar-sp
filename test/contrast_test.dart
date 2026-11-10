@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:recicla_radar_sp/core/theme/dark_theme.dart';
+import 'package:recicla_radar_sp/core/theme/high_contrast_theme.dart';
 import 'package:recicla_radar_sp/core/theme/light_theme.dart';
 import 'package:recicla_radar_sp/core/theme/status_colors.dart';
 
@@ -20,10 +21,15 @@ Color tint(Color foreground, Color background) =>
     Color.alphaBlend(foreground.withValues(alpha: 0.14), background);
 
 void main() {
-  const minimum = 4.5; // WCAG AA para texto normal.
-
-  void checkTheme(String name, ColorScheme scheme, StatusColors status, Color card) {
-    group('contraste AA no tema $name', () {
+  void checkTheme(
+    String name,
+    ColorScheme scheme,
+    StatusColors status,
+    Color card, {
+    double minimum = 4.5, // WCAG AA para texto normal.
+    String level = 'AA',
+  }) {
+    group('contraste $level no tema $name', () {
       final pairs = <String, (Color, Color)>{
         'texto sobre fundo': (scheme.onSurface, scheme.surface),
         'texto secundário sobre fundo': (scheme.onSurfaceVariant, scheme.surface),
@@ -63,4 +69,11 @@ void main() {
 
   checkTheme('claro', lightColorScheme, StatusColors.light, Colors.white);
   checkTheme('escuro', darkColorScheme, StatusColors.dark, const Color(0xFF18212C));
+
+  // Alto contraste: nível AAA (7:1), o mais exigente da WCAG para texto.
+  checkTheme('claro de alto contraste', highContrastLightScheme, highContrastLightStatus, Colors.white,
+      minimum: 7, level: 'AAA');
+  checkTheme('escuro de alto contraste', highContrastDarkScheme, highContrastDarkStatus,
+      const Color(0xFF0A0A0A),
+      minimum: 7, level: 'AAA');
 }
