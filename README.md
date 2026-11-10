@@ -9,8 +9,8 @@ recicladoras, quanto cada uma coletou e quais alertas preditivos pedem atenção
 
 Trabalho da FIAP, Global Solution 2026.2, Territory Predictive Insights.
 
-**Estado atual:** modelo inicial do front-end, com dados simulados (mock). Não há
-back-end nem autenticação real.
+**Estado atual:** front-end completo para Android, com dados simulados (mock) e tudo salvo no
+aparelho. Não há back-end nem autenticação real.
 
 ## Como executar
 
@@ -110,6 +110,7 @@ aparelho (`shared_preferences`), então não se perde ao fechar o app.
 | Leitura fora do padrão | Um material passa de 2 vezes a média de 30 dias, por 2 dias seguidos ou mais | Média; alta a partir de 3 vezes |
 | Coleta abaixo do esperado | Volume do distrito em 7 dias cai mais de 15% contra a média das 4 semanas anteriores | Média; alta acima de 30% |
 | Demanda alta com pouca cobertura | Índice de demanda 85 ou mais e no máximo 2 lixeiras funcionando | Média; alta sem nenhuma |
+| Vistoria de campo | Vistoria dos últimos 7 dias com gravidade alta, ou que aponta lixeira danificada ou vandalizada | Crítica (alta + pedido de coleta), alta ou média |
 
 - O ritmo de enchimento vem das leituras desde a última coleta. Com menos de 4 leituras o app
   não prevê o tempo e avisa que não há dados suficientes.
@@ -117,10 +118,37 @@ aparelho (`shared_preferences`), então não se perde ao fechar o app.
   dias seguidos (leitura fora do padrão) e quantas lixeiras do distrito tiveram queda (coleta).
 - Cada alerta mostra a evidência, a regra aplicada, o motivo da confiança e as limitações.
 - Mudar o limiar de enchimento nas Configurações recalcula os alertas.
+- **Alertas vistos:** o selo da aba Alertas conta só os alertas ativos que a pessoa ainda não
+  abriu. Abrir um alerta o marca como visto, e o botão de duplo visto na lista marca todos
+  (com "Desfazer"). Os vistos ficam salvos no aparelho.
+
+## Vistorias e privacidade
+
+- As vistorias ficam salvas no aparelho (`shared_preferences`), sem servidor. Elas aparecem no
+  detalhe da lixeira e, quando graves, geram um alerta.
+- Com o consentimento ligado (Configurações ou checkbox do cadastro), a vistoria leva o nome de
+  quem registrou. Sem consentimento, ela é anônima. O formulário avisa qual dos dois vale.
+- O app guarda só o mínimo de dado pessoal: o nome, e só com consentimento.
+
+## Telas ligadas entre si
+
+Alerta, lixeira e distrito se levam uns aos outros: o alerta tem "Ver a lixeira", "Ver no mapa" e
+"Ver o distrito"; o painel do distrito leva às lixeiras e aos alertas dele; o detalhe da lixeira
+mostra os alertas e as vistorias dela; os cartões da visão geral abrem as listas. As rotas aceitam
+filtros (`/lixeiras?distrito=`, `/lixeiras?lixeira=`, `/alertas?distrito=`, `/demanda?distrito=`).
+
+## Layout responsivo
+
+Em telas a partir de 720 dp a barra de baixo vira um menu lateral (com nomes a partir de 1100 dp).
+Listas, detalhes e formulários ficam centralizados com largura máxima, e na visão geral os
+gráficos ficam lado a lado. Com letra muito grande, a faixa de aviso dos alertas rola junto com a
+lista. O teste `test/responsive_test.dart` percorre o app em 9 tamanhos, de 320x640 a 1366x768.
 
 ## Acessibilidade
 
 - Contraste WCAG AA nos temas claro e escuro (verificado em `test/contrast_test.dart`).
+- Tema de **alto contraste** (Configurações), com contraste mínimo 7:1 (AAA), bordas grossas, e que
+  também acompanha o ajuste de alto contraste do aparelho.
 - Respeita o tamanho de fonte do sistema e permite ajustar nas Configurações.
 - Alvos de toque de pelo menos 48 dp e barra inferior com rótulos sempre visíveis.
 - Status e gravidade sempre com ícone e texto, nunca só cor.
