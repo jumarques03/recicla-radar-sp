@@ -1,6 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Necessária para baixar os mapas do OpenStreetMap. No modo debug o Flutter
+         já a inclui, mas o APK de release só tem o que está neste arquivo. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
-        android:label="recicla_radar_sp"
+        android:label="Recicla Radar SP"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

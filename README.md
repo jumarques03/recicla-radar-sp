@@ -14,7 +14,8 @@ back-end nem autenticação real.
 
 ## Como executar
 
-Requisitos: [Flutter](https://docs.flutter.dev/get-started/install) 3.x com Android ou iOS configurado.
+O app é feito **só para Android**. Requisitos: [Flutter](https://docs.flutter.dev/get-started/install)
+3.x, Android SDK e um emulador ou celular Android.
 
 ```bash
 flutter pub get

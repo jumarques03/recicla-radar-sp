@@ -104,11 +104,7 @@ class _AppViewState extends State<_AppView> {
       routerConfig: _router,
       locale: const Locale('pt', 'BR'),
       supportedLocales: const [Locale('pt', 'BR')],
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
       builder: (context, child) {
         // Respeita a fonte do sistema e soma a escolha feita nas Configurações.
         final media = MediaQuery.of(context);
