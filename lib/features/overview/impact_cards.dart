@@ -113,8 +113,7 @@ class SocialBenefitCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.sm),
           Text(
             'Estimamos que ${Formatters.percent(summary.recoveryRate * 100)} do material '
-            'coletado é reaproveitado pelas cooperativas. É uma suposição do projeto, '
-            'e os valores são simulados.',
+            'coletado é reaproveitado pelas cooperativas.',
             style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
           ),
         ],

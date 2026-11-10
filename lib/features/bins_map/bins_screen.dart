@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:go_router/go_router.dart';
-import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 
+import 'package:recicla_radar_sp/core/map/boundaries_status.dart';
+import 'package:recicla_radar_sp/core/map/city_layers.dart';
+import 'package:recicla_radar_sp/core/map/sp_map.dart';
 import 'package:recicla_radar_sp/core/router/app_routes.dart';
 import 'package:recicla_radar_sp/core/theme/app_spacing.dart';
 import 'package:recicla_radar_sp/core/widgets/map_attribution.dart';
@@ -16,8 +18,7 @@ import 'package:recicla_radar_sp/features/bins_map/bin_map_layers.dart';
 import 'package:recicla_radar_sp/features/bins_map/bin_marker.dart';
 import 'package:recicla_radar_sp/features/bins_map/bin_preview_sheet.dart';
 import 'package:recicla_radar_sp/state/bins_provider.dart';
-
-const LatLng _saoPaulo = LatLng(-23.5800, -46.6400);
+import 'package:recicla_radar_sp/state/boundaries_provider.dart';
 
 class BinsScreen extends StatefulWidget {
   const BinsScreen({super.key});
@@ -78,20 +79,19 @@ class _BinsMap extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final boundaries = context.watch<BoundariesProvider>().boundaries;
+
     return Stack(
       children: [
         FlutterMap(
-          options: const MapOptions(
-            initialCenter: _saoPaulo,
-            initialZoom: 10.6,
-            minZoom: 9,
-            maxZoom: 17,
-          ),
+          options: SpMap.options(),
           children: [
-            TileLayer(
-              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              userAgentPackageName: 'br.com.fiap.recicla_radar_sp',
-            ),
+            SpMap.tileLayer(),
+            if (boundaries != null) ...[
+              CityLayers.dimOutside(boundaries),
+              CityLayers.districtBorders(boundaries, width: 1),
+              ...CityLayers.outline(boundaries),
+            ],
             DisposalPointLayer(points: points),
             BinClusterLayer(
               bins: bins,
@@ -101,6 +101,12 @@ class _BinsMap extends StatelessWidget {
           ],
         ),
         const Positioned(top: AppSpacing.sm, left: AppSpacing.sm, child: BinLegend()),
+        const Positioned(
+          bottom: AppSpacing.xl,
+          left: AppSpacing.sm,
+          right: AppSpacing.sm,
+          child: Align(alignment: Alignment.bottomLeft, child: BoundariesStatus()),
+        ),
       ],
     );
   }

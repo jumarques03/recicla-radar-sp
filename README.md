@@ -73,7 +73,8 @@ lib/
   features/               auth, overview, demand_map, bins_map, alerts, inspection, settings
 test/
 assets/screenshots/       capturas de tela (a preencher)
-assets/geojson/           limites reais dos distritos (etapa futura)
+assets/geojson/           (vazia: os limites vêm do OpenStreetMap em tempo real)
+tool/                     script que gera os pontos de descarte dos distritos
 ```
 
 Os repositórios são interfaces (`lib/data/repositories`). Para trocar o mock por
@@ -83,7 +84,18 @@ as telas não mudam.
 ## Tecnologias
 
 Flutter (Material 3), `go_router`, `provider`, `flutter_map` (tiles do OpenStreetMap, sem
-chave de API), `fl_chart`, `shared_preferences`.
+chave de API), `fl_chart`, `shared_preferences`, `http`.
+
+## Mapas e dados do OpenStreetMap
+
+- **Contorno de São Paulo e limites dos 96 distritos:** o app busca no serviço Nominatim do
+  OpenStreetMap quando abre (`lib/data/osm`), já simplificados. Nada é baixado para dentro
+  do projeto. Sem internet, os mapas funcionam sem o contorno e mostram um aviso.
+- **Pontos de descarte e lixeiras:** são dados criados para o projeto
+  (`lib/data/mock/district_seeds.dart`). Esse arquivo é gerado por
+  `python tool/gerar_distritos.py`, que consulta o OpenStreetMap uma vez para sortear os
+  pontos dentro de cada distrito.
+- Os dados do mapa são © colaboradores do OpenStreetMap, licença ODbL.
 
 ## Acessibilidade
 
@@ -96,7 +108,6 @@ chave de API), `fl_chart`, `shared_preferences`.
 ## Próximos passos
 
 - Back-end e autenticação com Firebase.
-- GeoJSON real dos distritos no mapa de demanda.
 - Motor de alertas completo em `lib/domain`.
 - Capturas de tela em `assets/screenshots`.
 

@@ -5,6 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:recicla_radar_sp/app.dart';
 import 'package:recicla_radar_sp/data/repositories/mock_auth_repository.dart';
 
+import 'fake_boundary_repository.dart';
+
 Future<void> pumpApp(
   WidgetTester tester, {
   required Size size,
@@ -17,7 +19,7 @@ Future<void> pumpApp(
   tester.platformDispatcher.textScaleFactorTestValue = textScale;
   addTearDown(tester.view.reset);
   addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
-  await tester.pumpWidget(ReciclaRadarApp(prefs: prefs));
+  await tester.pumpWidget(ReciclaRadarApp(prefs: prefs, boundaryRepository: FakeBoundaryRepository()));
   await tester.pumpAndSettle();
 }
 

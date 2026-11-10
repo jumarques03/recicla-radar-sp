@@ -7,12 +7,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:recicla_radar_sp/core/router/app_router.dart';
 import 'package:recicla_radar_sp/core/theme/dark_theme.dart';
 import 'package:recicla_radar_sp/core/theme/light_theme.dart';
+import 'package:recicla_radar_sp/data/mock/district_seeds.dart';
+import 'package:recicla_radar_sp/data/osm/osm_boundary_repository.dart';
 import 'package:recicla_radar_sp/data/repositories/auth_repository.dart';
 import 'package:recicla_radar_sp/data/repositories/data_repositories.dart';
 import 'package:recicla_radar_sp/data/repositories/mock_auth_repository.dart';
 import 'package:recicla_radar_sp/data/repositories/mock_repositories.dart';
 import 'package:recicla_radar_sp/state/alerts_provider.dart';
 import 'package:recicla_radar_sp/state/bins_provider.dart';
+import 'package:recicla_radar_sp/state/boundaries_provider.dart';
 import 'package:recicla_radar_sp/state/districts_provider.dart';
 import 'package:recicla_radar_sp/state/filters_provider.dart';
 import 'package:recicla_radar_sp/state/overview_provider.dart';
@@ -33,6 +36,7 @@ class ReciclaRadarApp extends StatelessWidget {
     this.alertRepository,
     this.inspectionRepository,
     this.overviewRepository,
+    this.boundaryRepository,
   });
 
   final SharedPreferences prefs;
@@ -42,6 +46,7 @@ class ReciclaRadarApp extends StatelessWidget {
   final AlertRepository? alertRepository;
   final InspectionRepository? inspectionRepository;
   final OverviewRepository? overviewRepository;
+  final BoundaryRepository? boundaryRepository;
 
   @override
   Widget build(BuildContext context) {
@@ -52,6 +57,12 @@ class ReciclaRadarApp extends StatelessWidget {
         Provider<BinRepository>.value(value: bins),
         Provider<InspectionRepository>.value(
           value: inspectionRepository ?? MockInspectionRepository(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => BoundariesProvider(
+            boundaryRepository ??
+                OsmBoundaryRepository(districtIds: [for (final seed in districtSeeds) seed.$1]),
+          )..load(),
         ),
         ChangeNotifierProvider(create: (_) => SettingsProvider(prefs)),
         ChangeNotifierProvider(

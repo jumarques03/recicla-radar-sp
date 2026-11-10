@@ -1,5 +1,6 @@
 import 'package:recicla_radar_sp/data/models/alert.dart';
 import 'package:recicla_radar_sp/data/models/bin.dart';
+import 'package:recicla_radar_sp/data/models/city_boundaries.dart';
 import 'package:recicla_radar_sp/data/models/disposal_point.dart';
 import 'package:recicla_radar_sp/data/models/district.dart';
 import 'package:recicla_radar_sp/data/models/inspection.dart';
@@ -14,6 +15,10 @@ abstract interface class BinRepository {
 
   /// Leituras diárias, da mais recente para a mais antiga.
   Future<List<Reading>> fetchReadings(String binId, {int days = 30});
+}
+
+abstract interface class BoundaryRepository {
+  Future<CityBoundaries> fetchBoundaries();
 }
 
 abstract interface class DistrictRepository {

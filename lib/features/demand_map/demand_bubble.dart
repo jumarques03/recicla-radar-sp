@@ -11,8 +11,8 @@ class DemandBubble extends StatelessWidget {
   final District district;
   final VoidCallback onTap;
 
-  /// Cresce com a demanda, mas nunca fica menor que um alvo de toque (48).
-  static double sizeFor(District district) => 52 + district.demandIndex / 100 * 28;
+  /// Tamanho fixo, do tamanho de um alvo de toque.
+  static const double size = 48;
 
   @override
   Widget build(BuildContext context) {

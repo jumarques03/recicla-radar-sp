@@ -16,9 +16,9 @@ class DistrictSheet extends StatelessWidget {
   final int rank;
   final int total;
 
-  static void show(BuildContext context, District district) {
+  static Future<void> show(BuildContext context, District district) {
     final provider = context.read<DistrictsProvider>();
-    showModalBottomSheet<void>(
+    return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       builder: (context) => DistrictSheet(

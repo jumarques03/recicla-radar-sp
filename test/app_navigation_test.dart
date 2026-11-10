@@ -5,6 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:recicla_radar_sp/app.dart';
 import 'package:recicla_radar_sp/data/repositories/mock_auth_repository.dart';
 
+import 'fake_boundary_repository.dart';
+
 Future<void> signIn(WidgetTester tester, Size size, double textScale) async {
   SharedPreferences.setMockInitialValues({});
   final prefs = await SharedPreferences.getInstance();
@@ -14,7 +16,7 @@ Future<void> signIn(WidgetTester tester, Size size, double textScale) async {
   addTearDown(tester.view.reset);
   addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
 
-  await tester.pumpWidget(ReciclaRadarApp(prefs: prefs));
+  await tester.pumpWidget(ReciclaRadarApp(prefs: prefs, boundaryRepository: FakeBoundaryRepository()));
   await tester.pumpAndSettle();
   await tester.enterText(find.byType(TextFormField).first, MockAuthRepository.demoEmail);
   await tester.enterText(find.byType(TextFormField).last, MockAuthRepository.demoPassword);

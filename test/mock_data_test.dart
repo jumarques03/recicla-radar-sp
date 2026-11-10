@@ -4,6 +4,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:recicla_radar_sp/data/mock/mock_data.dart';
 import 'package:recicla_radar_sp/data/mock/simulation_config.dart';
 import 'package:recicla_radar_sp/data/models/bin.dart';
+import 'package:recicla_radar_sp/data/models/district.dart';
 import 'package:recicla_radar_sp/data/repositories/mock_repositories.dart';
 
 void main() {
@@ -12,9 +13,19 @@ void main() {
   const distance = Distance();
 
   group('pontos de descarte e lixeiras', () {
-    test('há vários pontos e mais lixeiras do que a versão inicial (20)', () {
-      expect(points.length, greaterThanOrEqualTo(30));
-      expect(bins.length, greaterThan(40));
+    test('há centenas de pontos e de lixeiras', () {
+      expect(points.length, greaterThanOrEqualTo(250));
+      expect(bins.length, greaterThanOrEqualTo(280));
+    });
+
+    test('os 96 distritos têm pelo menos 2 pontos e 2 lixeiras cada', () {
+      expect(MockData.districts.length, 96);
+      for (final district in MockData.districts) {
+        final districtPoints = points.where((p) => p.districtId == district.id).length;
+        final districtBins = bins.where((b) => b.districtId == district.id).length;
+        expect(districtPoints, greaterThanOrEqualTo(2), reason: district.name);
+        expect(districtBins, greaterThanOrEqualTo(2), reason: district.name);
+      }
     });
 
     test('todo ponto tem lixeira, e os mais movimentados têm duas', () {
@@ -63,6 +74,11 @@ void main() {
         expect(byTotal[i].demandIndex, greaterThanOrEqualTo(byTotal[i - 1].demandIndex));
       }
       expect(byTotal.last.demandIndex, 100);
+    });
+
+    test('as três faixas (baixa, média e alta) aparecem no mapa', () {
+      final levels = MockData.districts.map((d) => d.level).toSet();
+      expect(levels, DemandLevel.values.toSet());
     });
 
     test('o número de lixeiras do distrito bate com a lista', () {

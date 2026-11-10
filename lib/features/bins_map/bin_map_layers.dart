@@ -122,7 +122,7 @@ class DisposalPointLayer extends StatelessWidget {
 
   final List<DisposalPoint> points;
 
-  static const double minZoom = 12.5;
+  static const double minZoom = 14.5;
   static const double _size = 30;
 
   @override

@@ -6,7 +6,6 @@ import 'package:recicla_radar_sp/core/router/app_routes.dart';
 import 'package:recicla_radar_sp/core/theme/app_spacing.dart';
 import 'package:recicla_radar_sp/core/utils/app_exception.dart';
 import 'package:recicla_radar_sp/core/utils/validators.dart';
-import 'package:recicla_radar_sp/data/repositories/mock_auth_repository.dart';
 import 'package:recicla_radar_sp/features/auth/auth_scaffold.dart';
 import 'package:recicla_radar_sp/state/session_provider.dart';
 
@@ -49,7 +48,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return AuthScaffold(
       title: 'Recicla Radar SP',
       subtitle: 'Entre para acompanhar as lixeiras e os alertas da cidade.',
@@ -101,15 +99,6 @@ class _LoginScreenState extends State<LoginScreen> {
               TextButton(
                 onPressed: () => context.pushNamed(AppRoutes.register),
                 child: const Text('Criar uma conta'),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              Text(
-                'Versão de demonstração. Para testar, use '
-                '${MockAuthRepository.demoEmail} e a senha ${MockAuthRepository.demoPassword}.',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-                textAlign: TextAlign.center,
               ),
             ],
           ),

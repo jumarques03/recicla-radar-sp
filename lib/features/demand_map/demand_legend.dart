@@ -45,6 +45,8 @@ class DemandLegend extends StatelessWidget {
                     ],
                   ),
                 ),
+              const SizedBox(height: AppSpacing.xs),
+              Text('Aproxime para ver o índice', style: theme.textTheme.bodySmall),
             ],
           ),
         ),
