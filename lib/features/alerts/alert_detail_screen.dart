@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'package:recicla_radar_sp/core/router/app_navigation.dart';
 import 'package:recicla_radar_sp/core/theme/app_spacing.dart';
 import 'package:recicla_radar_sp/core/utils/formatters.dart';
 import 'package:recicla_radar_sp/core/widgets/app_card.dart';
@@ -100,6 +101,8 @@ class _AlertDetailScreenState extends State<AlertDetailScreen> {
                 style: theme.textTheme.bodyMedium,
               ),
               const SizedBox(height: AppSpacing.md),
+              _RelatedLinks(alert: alert),
+              const SizedBox(height: AppSpacing.md),
               _Section(
                 icon: Icons.visibility_outlined,
                 title: 'O que foi detectado',
@@ -153,6 +156,44 @@ class _AlertDetailScreenState extends State<AlertDetailScreen> {
   }
 
   String _format(double value) => Formatters.decimal(value);
+}
+
+/// Atalhos do alerta para a lixeira, o mapa e o distrito dele.
+class _RelatedLinks extends StatelessWidget {
+  const _RelatedLinks({required this.alert});
+
+  final Alert alert;
+
+  @override
+  Widget build(BuildContext context) {
+    final binId = alert.binId;
+    final districtId = alert.districtId;
+
+    return Wrap(
+      spacing: AppSpacing.sm,
+      runSpacing: AppSpacing.sm,
+      children: [
+        if (binId != null)
+          OutlinedButton.icon(
+            onPressed: () => context.openBin(binId),
+            icon: const Icon(Icons.recycling),
+            label: const Text('Ver a lixeira'),
+          ),
+        if (binId != null)
+          OutlinedButton.icon(
+            onPressed: () => context.showBinOnMap(binId),
+            icon: const Icon(Icons.place_outlined),
+            label: const Text('Ver no mapa'),
+          ),
+        if (districtId != null)
+          OutlinedButton.icon(
+            onPressed: () => context.showDistrict(districtId),
+            icon: const Icon(Icons.map_outlined),
+            label: const Text('Ver o distrito'),
+          ),
+      ],
+    );
+  }
 }
 
 class _DecisionButtons extends StatelessWidget {

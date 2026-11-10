@@ -1,30 +1,60 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'package:recicla_radar_sp/core/router/app_navigation.dart';
 import 'package:recicla_radar_sp/core/theme/app_spacing.dart';
 import 'package:recicla_radar_sp/core/widgets/charts/chart_card.dart';
 import 'package:recicla_radar_sp/core/widgets/charts/simple_line_chart.dart';
 import 'package:recicla_radar_sp/core/widgets/status_badges.dart';
 import 'package:recicla_radar_sp/data/models/district.dart';
+import 'package:recicla_radar_sp/state/alerts_provider.dart';
 import 'package:recicla_radar_sp/state/districts_provider.dart';
 
 /// Painel inferior com os detalhes de um distrito.
 class DistrictSheet extends StatelessWidget {
-  const DistrictSheet({super.key, required this.district, required this.rank, required this.total});
+  const DistrictSheet({
+    super.key,
+    required this.district,
+    required this.rank,
+    required this.total,
+    required this.activeAlerts,
+    required this.onShowBins,
+    required this.onShowAlerts,
+  });
 
   final District district;
   final int rank;
   final int total;
 
+  /// Alertas ativos do distrito.
+  final int activeAlerts;
+
+  /// Levam para as outras telas já filtradas por este distrito.
+  final VoidCallback onShowBins;
+  final VoidCallback onShowAlerts;
+
   static Future<void> show(BuildContext context, District district) {
     final provider = context.read<DistrictsProvider>();
+    final activeAlerts = context.read<AlertsProvider>().activeForDistrict(district.id).length;
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      builder: (context) => DistrictSheet(
+      // Por cima do app todo; senão a barra de navegação esconde a parte de baixo do painel.
+      useRootNavigator: true,
+      builder: (sheetContext) => DistrictSheet(
         district: district,
         rank: provider.rankOf(district),
         total: provider.data?.length ?? 0,
+        activeAlerts: activeAlerts,
+        // Fecha o painel e abre a outra tela, usando o contexto da tela que abriu o painel.
+        onShowBins: () {
+          Navigator.of(sheetContext).pop();
+          context.showDistrictBins(district.id);
+        },
+        onShowAlerts: () {
+          Navigator.of(sheetContext).pop();
+          context.showDistrictAlerts(district.id);
+        },
       ),
     );
   }
@@ -69,7 +99,25 @@ class DistrictSheet extends StatelessWidget {
               ),
             ),
             const SizedBox(height: AppSpacing.md),
-            OutlinedButton(
+            FilledButton.icon(
+              onPressed: onShowBins,
+              icon: const Icon(Icons.recycling),
+              label: Text(district.binCount == 1
+                  ? 'Ver a lixeira do distrito'
+                  : 'Ver as ${district.binCount} lixeiras do distrito'),
+            ),
+            const SizedBox(height: AppSpacing.sm + 4),
+            OutlinedButton.icon(
+              onPressed: onShowAlerts,
+              icon: const Icon(Icons.notifications_outlined),
+              label: Text(switch (activeAlerts) {
+                0 => 'Ver alertas do distrito (nenhum ativo)',
+                1 => 'Ver o alerta ativo do distrito',
+                _ => 'Ver os $activeAlerts alertas ativos do distrito',
+              }),
+            ),
+            const SizedBox(height: AppSpacing.sm + 4),
+            TextButton(
               onPressed: () => Navigator.of(context).pop(),
               child: const Text('Fechar'),
             ),

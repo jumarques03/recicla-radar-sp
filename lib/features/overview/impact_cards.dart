@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'package:recicla_radar_sp/core/router/app_navigation.dart';
 import 'package:recicla_radar_sp/core/theme/app_spacing.dart';
 import 'package:recicla_radar_sp/core/theme/status_colors.dart';
 import 'package:recicla_radar_sp/core/utils/formatters.dart';
@@ -25,18 +26,21 @@ class ImpactStatGrid extends StatelessWidget {
         label: 'Coletado',
         value: Formatters.kg(summary.totalKg),
         footnote: 'nos últimos ${summary.days} dias',
+        onTap: context.showAllBins,
       ),
       StatCard(
         icon: Icons.power_settings_new,
         label: 'Lixeiras operando',
         value: Formatters.percent(summary.operatingPercent),
         footnote: 'enviando dados agora',
+        onTap: context.showAllBins,
       ),
       StatCard(
         icon: Icons.notifications_active_outlined,
         label: 'Alertas ativos',
         value: '$activeAlerts',
         footnote: 'aguardando decisão',
+        onTap: context.showAllAlerts,
       ),
       StatCard(
         icon: Icons.eco_outlined,

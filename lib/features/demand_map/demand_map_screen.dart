@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import 'package:recicla_radar_sp/core/map/boundaries_status.dart';
 import 'package:recicla_radar_sp/core/map/city_layers.dart';
+import 'package:recicla_radar_sp/core/map/map_controller_grabber.dart';
 import 'package:recicla_radar_sp/core/map/sp_map.dart';
 import 'package:recicla_radar_sp/core/theme/app_spacing.dart';
 import 'package:recicla_radar_sp/core/widgets/map_attribution.dart';
@@ -20,7 +21,10 @@ import 'package:recicla_radar_sp/state/boundaries_provider.dart';
 import 'package:recicla_radar_sp/state/districts_provider.dart';
 
 class DemandMapScreen extends StatefulWidget {
-  const DemandMapScreen({super.key});
+  const DemandMapScreen({super.key, this.districtId});
+
+  /// Distrito que outra tela pediu para mostrar (abre o painel dele e enquadra o mapa).
+  final String? districtId;
 
   @override
   State<DemandMapScreen> createState() => _DemandMapScreenState();
@@ -30,6 +34,32 @@ class _DemandMapScreenState extends State<DemandMapScreen> {
   // Estado local da tela: mapa ou lista, e o distrito aberto no painel.
   bool _showMap = true;
   String? _selectedId;
+  String? _handledDistrictId;
+
+  @override
+  void didUpdateWidget(DemandMapScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.districtId != widget.districtId) _showMap = true;
+  }
+
+  /// Abre o painel do distrito pedido por outra tela, uma vez por pedido.
+  void _applyRequest(List<District> districts) {
+    final id = widget.districtId;
+    if (id == null) {
+      _handledDistrictId = null;
+      return;
+    }
+    if (id == _handledDistrictId) return;
+    _handledDistrictId = id;
+    for (final district in districts) {
+      if (district.id == id) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _openDistrict(district);
+        });
+        return;
+      }
+    }
+  }
 
   Future<void> _openDistrict(District district) async {
     setState(() => _selectedId = district.id);
@@ -87,11 +117,20 @@ class _DemandMapScreenState extends State<DemandMapScreen> {
             padding: const EdgeInsets.all(AppSpacing.md),
             child: SegmentedButton<bool>(
               segments: const [
-                ButtonSegment(value: true, icon: Icon(Icons.map_outlined), label: Text('Mapa')),
-                ButtonSegment(value: false, icon: Icon(Icons.list), label: Text('Lista')),
+                ButtonSegment(
+                  value: true,
+                  icon: Icon(Icons.map_outlined),
+                  label: Text('Mapa'),
+                ),
+                ButtonSegment(
+                  value: false,
+                  icon: Icon(Icons.list),
+                  label: Text('Lista'),
+                ),
               ],
               selected: {_showMap},
-              onSelectionChanged: (values) => setState(() => _showMap = values.first),
+              onSelectionChanged: (values) =>
+                  setState(() => _showMap = values.first),
             ),
           ),
           Expanded(
@@ -100,13 +139,21 @@ class _DemandMapScreenState extends State<DemandMapScreen> {
               isEmpty: (list) => list.isEmpty,
               emptyTitle: 'Nenhum distrito encontrado',
               emptyMessage: 'Ainda não há dados de demanda para mostrar.',
-              builder: (context, list) => _showMap
-                  ? _DemandMap(districts: list, selectedId: _selectedId, onOpen: _openDistrict)
-                  : DemandDistrictList(
-                      districts: list,
-                      rankOf: districts.rankOf,
-                      onTap: _openDistrict,
-                    ),
+              builder: (context, list) {
+                _applyRequest(list);
+                return _showMap
+                    ? _DemandMap(
+                        districts: list,
+                        selectedId: _selectedId,
+                        focusDistrictId: widget.districtId,
+                        onOpen: _openDistrict,
+                      )
+                    : DemandDistrictList(
+                        districts: list,
+                        rankOf: districts.rankOf,
+                        onTap: _openDistrict,
+                      );
+              },
             ),
           ),
         ],
@@ -116,10 +163,18 @@ class _DemandMapScreenState extends State<DemandMapScreen> {
 }
 
 class _DemandMap extends StatefulWidget {
-  const _DemandMap({required this.districts, required this.selectedId, required this.onOpen});
+  const _DemandMap({
+    required this.districts,
+    required this.selectedId,
+    required this.focusDistrictId,
+    required this.onOpen,
+  });
 
   final List<District> districts;
   final String? selectedId;
+
+  /// Distrito para enquadrar no mapa (pedido por outra tela).
+  final String? focusDistrictId;
   final ValueChanged<District> onOpen;
 
   @override
@@ -127,11 +182,64 @@ class _DemandMap extends StatefulWidget {
 }
 
 class _DemandMapState extends State<_DemandMap> {
-  final LayerHitNotifier<String> _hit = ValueNotifier<LayerHitResult<String>?>(null);
+  final LayerHitNotifier<String> _hit = ValueNotifier<LayerHitResult<String>?>(
+    null,
+  );
+  MapController? _controller;
+  String? _framedDistrictId;
 
   /// Com o mapa mais afastado que isso, os distritos são bolinhas pequenas;
   /// a partir daqui elas crescem e mostram o número do índice.
   static const double _fullDotsZoom = 11.5;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _frameRequestedDistrict(),
+    );
+  }
+
+  @override
+  void didUpdateWidget(_DemandMap oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _frameRequestedDistrict(),
+    );
+  }
+
+  /// Enquadra no mapa o distrito pedido por outra tela. Se os limites ainda não
+  /// chegaram, usa o ponto central do distrito.
+  void _frameRequestedDistrict() {
+    final controller = _controller;
+    if (!mounted || controller == null) return;
+    final id = widget.focusDistrictId;
+    if (id == null) {
+      _framedDistrictId = null;
+      return;
+    }
+    final shape = context.read<BoundariesProvider>().boundaries?.districts[id];
+    if (id == _framedDistrictId && shape == null) return;
+
+    if (shape != null) {
+      _framedDistrictId = id;
+      controller.fitCamera(
+        CameraFit.bounds(
+          bounds: LatLngBounds.fromPoints([
+            for (final polygon in shape.polygons) ...polygon.outer,
+          ]),
+          padding: const EdgeInsets.all(48),
+          maxZoom: 13.5,
+        ),
+      );
+    } else if (id != _framedDistrictId) {
+      for (final district in widget.districts) {
+        if (district.id != id) continue;
+        _framedDistrictId = id;
+        controller.move(district.position, 12.5);
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -150,26 +258,37 @@ class _DemandMapState extends State<_DemandMap> {
     }
   }
 
-  List<Polygon<String>> _polygons(BuildContext context, CityBoundaries boundaries) {
+  List<Polygon<String>> _polygons(
+    BuildContext context,
+    CityBoundaries boundaries,
+  ) {
     final primary = Theme.of(context).colorScheme.primary;
     final polygons = <Polygon<String>>[];
     // O distrito selecionado vai por último, para a borda dele ficar por cima.
     final ordered = [...widget.districts]
-      ..sort((a, b) => (a.id == widget.selectedId ? 1 : 0).compareTo(b.id == widget.selectedId ? 1 : 0));
+      ..sort(
+        (a, b) => (a.id == widget.selectedId ? 1 : 0).compareTo(
+          b.id == widget.selectedId ? 1 : 0,
+        ),
+      );
 
     for (final district in ordered) {
       final shape = boundaries.districts[district.id];
       if (shape == null) continue;
       final selected = district.id == widget.selectedId;
       for (final polygon in shape.polygons) {
-        polygons.add(Polygon<String>(
-          points: polygon.outer,
-          holePointsList: polygon.holes,
-          color: district.level.color(context).withValues(alpha: selected ? 0.75 : 0.5),
-          borderStrokeWidth: selected ? 4 : 1.4,
-          borderColor: selected ? primary : CityLayers.districtBorder,
-          hitValue: district.id,
-        ));
+        polygons.add(
+          Polygon<String>(
+            points: polygon.outer,
+            holePointsList: polygon.holes,
+            color: district.level
+                .color(context)
+                .withValues(alpha: selected ? 0.75 : 0.5),
+            borderStrokeWidth: selected ? 4 : 1.4,
+            borderColor: selected ? primary : CityLayers.districtBorder,
+            hitValue: district.id,
+          ),
+        );
       }
     }
     return polygons;
@@ -185,6 +304,14 @@ class _DemandMapState extends State<_DemandMap> {
           options: SpMap.options(maxZoom: 16),
           children: [
             SpMap.tileLayer(),
+            MapControllerGrabber(
+              onController: (controller) {
+                _controller = controller;
+                WidgetsBinding.instance.addPostFrameCallback(
+                  (_) => _frameRequestedDistrict(),
+                );
+              },
+            ),
             if (boundaries != null) ...[
               CityLayers.dimOutside(boundaries),
               GestureDetector(
@@ -204,12 +331,19 @@ class _DemandMapState extends State<_DemandMap> {
             const MapAttribution(),
           ],
         ),
-        const Positioned(top: AppSpacing.sm, left: AppSpacing.sm, child: DemandLegend()),
+        const Positioned(
+          top: AppSpacing.sm,
+          left: AppSpacing.sm,
+          child: DemandLegend(),
+        ),
         const Positioned(
           bottom: AppSpacing.xl,
           left: AppSpacing.sm,
           right: AppSpacing.sm,
-          child: Align(alignment: Alignment.bottomLeft, child: BoundariesStatus()),
+          child: Align(
+            alignment: Alignment.bottomLeft,
+            child: BoundariesStatus(),
+          ),
         ),
       ],
     );
@@ -218,7 +352,11 @@ class _DemandMapState extends State<_DemandMap> {
 
 /// Pontos dos distritos. Sempre aparecem; o tamanho e o texto dependem do zoom.
 class _DistrictLabels extends StatelessWidget {
-  const _DistrictLabels({required this.districts, required this.fullZoom, required this.onTap});
+  const _DistrictLabels({
+    required this.districts,
+    required this.fullZoom,
+    required this.onTap,
+  });
 
   final List<District> districts;
 

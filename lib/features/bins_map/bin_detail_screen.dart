@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import 'package:recicla_radar_sp/core/router/app_navigation.dart';
 import 'package:recicla_radar_sp/core/router/app_routes.dart';
+import 'package:recicla_radar_sp/core/theme/status_colors.dart';
 import 'package:recicla_radar_sp/core/theme/app_spacing.dart';
 import 'package:recicla_radar_sp/core/utils/formatters.dart';
 import 'package:recicla_radar_sp/core/widgets/app_card.dart';
@@ -15,8 +17,11 @@ import 'package:recicla_radar_sp/core/widgets/status_badges.dart';
 import 'package:recicla_radar_sp/data/models/bin.dart';
 import 'package:recicla_radar_sp/data/models/reading.dart';
 import 'package:recicla_radar_sp/data/repositories/data_repositories.dart';
+import 'package:recicla_radar_sp/features/alerts/alert_card.dart';
 import 'package:recicla_radar_sp/features/bins_map/bin_card.dart';
+import 'package:recicla_radar_sp/state/alerts_provider.dart';
 import 'package:recicla_radar_sp/state/bins_provider.dart';
+import 'package:recicla_radar_sp/state/inspections_provider.dart';
 import 'package:recicla_radar_sp/state/loadable_notifier.dart';
 
 class BinDetailScreen extends StatefulWidget {
@@ -93,6 +98,25 @@ class _BinDetailScreenState extends State<BinDetailScreen> {
             ],
           ),
         ),
+        const SizedBox(height: AppSpacing.md),
+        Wrap(
+          spacing: AppSpacing.sm,
+          runSpacing: AppSpacing.sm,
+          children: [
+            OutlinedButton.icon(
+              onPressed: () => context.showBinOnMap(bin.id),
+              icon: const Icon(Icons.place_outlined),
+              label: const Text('Ver no mapa'),
+            ),
+            OutlinedButton.icon(
+              onPressed: () => context.showDistrict(bin.districtId),
+              icon: const Icon(Icons.map_outlined),
+              label: Text('Distrito ${bin.districtName}'),
+            ),
+          ],
+        ),
+        const SectionTitle('Alertas desta lixeira'),
+        _BinAlerts(binId: bin.id),
         const SectionTitle('Material coletado'),
         ChartCard(
           title: 'Quilos por material (30 dias)',
@@ -143,6 +167,8 @@ class _BinDetailScreenState extends State<BinDetailScreen> {
             );
           },
         ),
+        const SectionTitle('Vistorias registradas'),
+        _BinInspections(binId: bin.id),
         const SizedBox(height: AppSpacing.lg),
         FilledButton.icon(
           icon: const Icon(Icons.edit_note),
@@ -153,6 +179,102 @@ class _BinDetailScreenState extends State<BinDetailScreen> {
           ),
         ),
         const SizedBox(height: AppSpacing.lg),
+      ],
+    );
+  }
+}
+
+/// Alertas ativos desta lixeira, ligados à tela de alertas.
+class _BinAlerts extends StatelessWidget {
+  const _BinAlerts({required this.binId});
+
+  final String binId;
+
+  static const int _maxShown = 3;
+
+  @override
+  Widget build(BuildContext context) {
+    final alerts = context.watch<AlertsProvider>();
+    final active = alerts.activeForBin(binId);
+
+    if (alerts.status != LoadStatus.ready) {
+      return const SizedBox(height: 80, child: LoadingView());
+    }
+    if (active.isEmpty) {
+      return AppCard(
+        child: Row(
+          children: [
+            Icon(Icons.check_circle_outline, color: context.statusColors.success),
+            const SizedBox(width: AppSpacing.sm + 4),
+            const Expanded(child: Text('Nenhum alerta ativo para esta lixeira.')),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final alert in active.take(_maxShown)) ...[
+          AlertCard(
+            alert: alert,
+            isNew: !alerts.isSeen(alert.id),
+            onTap: () => context.openAlert(alert.id),
+          ),
+          const SizedBox(height: AppSpacing.sm + 4),
+        ],
+        if (active.length > _maxShown)
+          TextButton(
+            onPressed: () => context.showBinAlerts(binId),
+            child: Text('Ver os ${active.length} alertas desta lixeira'),
+          ),
+      ],
+    );
+  }
+}
+
+/// Vistorias salvas no aparelho para esta lixeira.
+class _BinInspections extends StatelessWidget {
+  const _BinInspections({required this.binId});
+
+  final String binId;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final items = context.watch<InspectionsProvider>().forBin(binId);
+
+    if (items.isEmpty) {
+      return const AppCard(child: Text('Ainda não há vistorias registradas para esta lixeira.'));
+    }
+    return Column(
+      children: [
+        for (final item in items.take(5)) ...[
+          AppCard(
+            semanticLabel: '${item.type.label}, gravidade ${item.severity.label.toLowerCase()}, '
+                '${Formatters.dateTime(item.dateTime)}. ${item.description}',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(item.type.label, style: theme.textTheme.titleMedium),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  '${Formatters.dateTime(item.dateTime)} · gravidade ${item.severity.label.toLowerCase()}'
+                  '${item.needsAction ? ' · precisa de coleta ou reparo' : ''}',
+                  style: theme.textTheme.bodySmall,
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Text(item.description, style: theme.textTheme.bodyMedium),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  item.authorName == null ? 'Registrada de forma anônima' : 'Por ${item.authorName}',
+                  style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm + 4),
+        ],
       ],
     );
   }

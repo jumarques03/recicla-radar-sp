@@ -56,14 +56,20 @@ GoRouter createAppRouter(SessionProvider session) {
             GoRoute(
               name: AppRoutes.demand,
               path: '/demanda',
-              builder: (context, state) => const DemandMapScreen(),
+              builder: (context, state) => DemandMapScreen(
+                districtId: state.uri.queryParameters[AppRoutes.districtParam],
+              ),
             ),
           ]),
           StatefulShellBranch(routes: [
             GoRoute(
               name: AppRoutes.bins,
               path: '/lixeiras',
-              builder: (context, state) => const BinsScreen(),
+              builder: (context, state) => BinsScreen(
+                districtId: state.uri.queryParameters[AppRoutes.districtParam],
+                focusBinId: state.uri.queryParameters[AppRoutes.binParam],
+                showList: state.uri.queryParameters[AppRoutes.modeParam] == 'lista',
+              ),
               routes: [
                 GoRoute(
                   name: AppRoutes.bin,
@@ -78,7 +84,10 @@ GoRouter createAppRouter(SessionProvider session) {
             GoRoute(
               name: AppRoutes.alerts,
               path: '/alertas',
-              builder: (context, state) => const AlertsScreen(),
+              builder: (context, state) => AlertsScreen(
+                districtId: state.uri.queryParameters[AppRoutes.districtParam],
+                binId: state.uri.queryParameters[AppRoutes.binParam],
+              ),
               routes: [
                 GoRoute(
                   name: AppRoutes.alert,

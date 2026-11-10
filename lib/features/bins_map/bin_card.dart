@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
 import 'package:recicla_radar_sp/core/theme/app_spacing.dart';
+import 'package:recicla_radar_sp/core/theme/status_colors.dart';
 import 'package:recicla_radar_sp/core/utils/formatters.dart';
 import 'package:recicla_radar_sp/core/widgets/app_card.dart';
 import 'package:recicla_radar_sp/core/widgets/status_badges.dart';
+import 'package:recicla_radar_sp/core/widgets/status_chip.dart';
 import 'package:recicla_radar_sp/data/models/bin.dart';
 
 /// Barra de enchimento com a porcentagem escrita ao lado.
@@ -38,10 +40,13 @@ class FillBar extends StatelessWidget {
 }
 
 class BinCard extends StatelessWidget {
-  const BinCard({super.key, required this.bin, required this.onTap});
+  const BinCard({super.key, required this.bin, required this.onTap, this.activeAlerts = 0});
 
   final Bin bin;
   final VoidCallback onTap;
+
+  /// Alertas ativos desta lixeira.
+  final int activeAlerts;
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +54,7 @@ class BinCard extends StatelessWidget {
     return AppCard(
       onTap: onTap,
       semanticLabel: '${bin.name}, ${bin.districtName}. ${bin.status.label}, '
-          '${bin.fillPercent}% cheia. Última coleta ${Formatters.timeAgo(bin.lastCollection)}.',
+          '${bin.fillPercent}% cheia.${activeAlerts > 0 ? ' $activeAlerts alertas ativos.' : ''} Última coleta ${Formatters.timeAgo(bin.lastCollection)}.',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -73,6 +78,12 @@ class BinCard extends StatelessWidget {
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               BinStatusChip(bin.status),
+              if (activeAlerts > 0)
+                StatusChip(
+                  icon: Icons.notifications_active_outlined,
+                  label: activeAlerts == 1 ? '1 alerta' : '$activeAlerts alertas',
+                  color: context.statusColors.warning,
+                ),
               Text(
                 'Coleta ${Formatters.timeAgo(bin.lastCollection)}',
                 style: theme.textTheme.bodySmall,

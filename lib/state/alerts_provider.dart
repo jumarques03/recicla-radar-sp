@@ -44,6 +44,14 @@ class AlertsProvider extends LoadableNotifier<List<Alert>> {
   List<Alert> get critical =>
       _alerts.where((a) => a.status.isActive && a.severity == AlertSeverity.critical).toList();
 
+  /// Alertas ativos de uma lixeira.
+  List<Alert> activeForBin(String binId) =>
+      _alerts.where((a) => a.binId == binId && a.status.isActive).toList();
+
+  /// Alertas ativos de um distrito (das lixeiras dele e os do distrito todo).
+  List<Alert> activeForDistrict(String districtId) =>
+      _alerts.where((a) => a.districtId == districtId && a.status.isActive).toList();
+
   // ------------------------------------------------------------------- vistos
 
   bool isSeen(String alertId) => _seen.contains(alertId);

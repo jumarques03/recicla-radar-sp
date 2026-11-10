@@ -12,6 +12,11 @@ abstract final class AppRoutes {
   static const String inspection = 'vistoria';
   static const String settings = 'configuracoes';
 
+  // Nomes dos filtros que as rotas aceitam na URL (ex.: /lixeiras?distrito=123&modo=lista).
+  static const String districtParam = 'distrito';
+  static const String binParam = 'lixeira';
+  static const String modeParam = 'modo';
+
   static const String loginPath = '/login';
   static const String registerPath = '/cadastro';
   static const String forgotPasswordPath = '/recuperar-senha';

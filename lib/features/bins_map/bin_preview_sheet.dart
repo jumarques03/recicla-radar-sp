@@ -18,6 +18,8 @@ class BinPreviewSheet extends StatelessWidget {
     final router = GoRouter.of(context);
     showModalBottomSheet<void>(
       context: context,
+      // Por cima do app todo; senão a barra de navegação esconde a parte de baixo do painel.
+      useRootNavigator: true,
       builder: (sheetContext) => BinPreviewSheet(
         bin: bin,
         onOpenDetails: () {

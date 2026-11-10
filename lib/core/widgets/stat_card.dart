@@ -11,6 +11,7 @@ class StatCard extends StatelessWidget {
     required this.label,
     required this.value,
     this.footnote,
+    this.onTap,
   });
 
   final IconData icon;
@@ -18,10 +19,14 @@ class StatCard extends StatelessWidget {
   final String value;
   final String? footnote;
 
+  /// Quando existe, o cartão é um atalho para outra tela.
+  final VoidCallback? onTap;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return AppCard(
+      onTap: onTap,
       semanticLabel: '$label: $value${footnote == null ? '' : '. $footnote'}',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
