@@ -24,6 +24,8 @@ class Bin {
     required this.address,
     required this.districtId,
     required this.districtName,
+    required this.pointId,
+    required this.pointName,
     required this.position,
     required this.fillPercent,
     required this.status,
@@ -37,6 +39,10 @@ class Bin {
   final String address;
   final String districtId;
   final String districtName;
+
+  /// Ponto de descarte onde a lixeira está instalada.
+  final String pointId;
+  final String pointName;
   final LatLng position;
   final int fillPercent;
   final BinStatus status;

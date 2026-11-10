@@ -78,7 +78,7 @@ class _BinDetailScreenState extends State<BinDetailScreen> {
               const SizedBox(height: AppSpacing.md),
               BinStatusChip(bin.status),
               const SizedBox(height: AppSpacing.md),
-              _InfoRow(icon: Icons.place_outlined, label: 'Endereço', value: bin.address),
+              _InfoRow(icon: Icons.place_outlined, label: 'Local', value: bin.address),
               _InfoRow(
                 icon: Icons.schedule,
                 label: 'Última coleta',

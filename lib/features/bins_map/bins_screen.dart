@@ -10,7 +10,9 @@ import 'package:recicla_radar_sp/core/widgets/map_attribution.dart';
 import 'package:recicla_radar_sp/core/widgets/settings_action.dart';
 import 'package:recicla_radar_sp/core/widgets/state_views.dart';
 import 'package:recicla_radar_sp/data/models/bin.dart';
+import 'package:recicla_radar_sp/data/models/disposal_point.dart';
 import 'package:recicla_radar_sp/features/bins_map/bin_card.dart';
+import 'package:recicla_radar_sp/features/bins_map/bin_map_layers.dart';
 import 'package:recicla_radar_sp/features/bins_map/bin_marker.dart';
 import 'package:recicla_radar_sp/features/bins_map/bin_preview_sheet.dart';
 import 'package:recicla_radar_sp/state/bins_provider.dart';
@@ -57,7 +59,9 @@ class _BinsScreenState extends State<BinsScreen> {
               emptyTitle: 'Nenhuma lixeira cadastrada',
               emptyMessage: 'Quando houver lixeiras, elas aparecem aqui.',
               builder: (context, list) =>
-                  _showMap ? _BinsMap(bins: list) : _BinsList(bins: list),
+                  _showMap
+                  ? _BinsMap(bins: list, points: bins.points)
+                  : _BinsList(bins: list),
             ),
           ),
         ],
@@ -67,9 +71,10 @@ class _BinsScreenState extends State<BinsScreen> {
 }
 
 class _BinsMap extends StatelessWidget {
-  const _BinsMap({required this.bins});
+  const _BinsMap({required this.bins, required this.points});
 
   final List<Bin> bins;
+  final List<DisposalPoint> points;
 
   @override
   Widget build(BuildContext context) {
@@ -87,16 +92,10 @@ class _BinsMap extends StatelessWidget {
               urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
               userAgentPackageName: 'br.com.fiap.recicla_radar_sp',
             ),
-            MarkerLayer(
-              markers: [
-                for (final bin in bins)
-                  Marker(
-                    point: bin.position,
-                    width: BinMarker.size,
-                    height: BinMarker.size,
-                    child: BinMarker(bin: bin, onTap: () => BinPreviewSheet.show(context, bin)),
-                  ),
-              ],
+            DisposalPointLayer(points: points),
+            BinClusterLayer(
+              bins: bins,
+              onBinTap: (bin) => BinPreviewSheet.show(context, bin),
             ),
             const MapAttribution(),
           ],

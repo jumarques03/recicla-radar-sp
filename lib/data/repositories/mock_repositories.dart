@@ -1,6 +1,8 @@
 import 'package:recicla_radar_sp/data/mock/mock_data.dart';
+import 'package:recicla_radar_sp/data/mock/simulation_config.dart';
 import 'package:recicla_radar_sp/data/models/alert.dart';
 import 'package:recicla_radar_sp/data/models/bin.dart';
+import 'package:recicla_radar_sp/data/models/disposal_point.dart';
 import 'package:recicla_radar_sp/data/models/district.dart';
 import 'package:recicla_radar_sp/data/models/inspection.dart';
 import 'package:recicla_radar_sp/data/models/overview_summary.dart';
@@ -17,6 +19,12 @@ class MockBinRepository implements BinRepository {
   Future<List<Bin>> fetchBins() async {
     await _simulateNetwork();
     return MockData.bins;
+  }
+
+  @override
+  Future<List<DisposalPoint>> fetchDisposalPoints() async {
+    await _simulateNetwork();
+    return MockData.disposalPoints;
   }
 
   @override
@@ -66,9 +74,6 @@ class MockInspectionRepository implements InspectionRepository {
 
 /// Soma as leituras simuladas para montar a visão geral de um período.
 class MockOverviewRepository implements OverviewRepository {
-  /// Parte do que é coletado que é de fato reaproveitado pelas cooperativas.
-  static const double _recoveryRate = 0.88;
-
   @override
   Future<OverviewSummary> fetchSummary({required int days, WasteMaterial? material}) async {
     await _simulateNetwork();
@@ -97,7 +102,8 @@ class MockOverviewRepository implements OverviewRepository {
       totalKg: totalKg,
       previousKg: sum(previous),
       operatingPercent: (working / bins.length * 100).round(),
-      divertedKg: totalKg * _recoveryRate,
+      divertedKg: totalKg * SimulationConfig.recoveryRate,
+      recoveryRate: SimulationConfig.recoveryRate,
       series: _buildSeries(current, days, today, sum),
       seriesUnit: days <= 7 ? 'dia' : 'semana',
       byMaterial: {

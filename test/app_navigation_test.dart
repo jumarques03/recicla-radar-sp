@@ -24,13 +24,15 @@ Future<void> signIn(WidgetTester tester, Size size, double textScale) async {
 }
 
 /// Rola a lista visível até o texto aparecer (as outras abas ficam fora da tela).
-Future<void> scrollTo(WidgetTester tester, String text) {
+Future<void> scrollTo(WidgetTester tester, String text) async {
   // A tela aberta fica por último na árvore; as outras abas ficam fora da tela.
   final list = find.descendant(
     of: find.byType(ListView, skipOffstage: true).last,
     matching: find.byType(Scrollable),
   );
-  return tester.scrollUntilVisible(find.text(text), 300, scrollable: list.first);
+  await tester.scrollUntilVisible(find.text(text), 300, scrollable: list.first);
+  await tester.ensureVisible(find.text(text));
+  await tester.pumpAndSettle();
 }
 
 void main() {

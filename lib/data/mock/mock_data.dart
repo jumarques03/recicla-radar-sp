@@ -2,20 +2,26 @@ import 'dart:math';
 
 import 'package:latlong2/latlong.dart';
 
+import 'package:recicla_radar_sp/data/mock/simulation_config.dart';
 import 'package:recicla_radar_sp/data/models/alert.dart';
 import 'package:recicla_radar_sp/data/models/bin.dart';
+import 'package:recicla_radar_sp/data/models/disposal_point.dart';
 import 'package:recicla_radar_sp/data/models/district.dart';
 import 'package:recicla_radar_sp/data/models/reading.dart';
 import 'package:recicla_radar_sp/data/models/waste_material.dart';
 
 /// Dados simulados da cidade de São Paulo. Tudo é gerado de forma
 /// determinística (mesma semente), então o app sempre mostra os mesmos números.
+///
+/// Os nomes dos lugares são reais, mas as posições são aproximadas e a
+/// quantidade de lixo de cada ponto é inventada.
 abstract final class MockData {
   /// Dias de leitura gerados por lixeira (cobre o período atual + o anterior).
   static const int readingDays = 180;
 
   static final DateTime now = DateTime.now();
 
+  static final List<DisposalPoint> disposalPoints = _buildPoints();
   static final List<District> districts = _buildDistricts();
   static final _World _world = _buildWorld();
   static List<Bin> get bins => _world.bins;
@@ -24,84 +30,184 @@ abstract final class MockData {
   static Map<String, List<Reading>> get readingsByBin => _world.readings;
   static final List<Alert> alerts = _buildAlerts();
 
-  // id, nome, latitude, longitude, índice de demanda, rua de referência.
-  static const List<(String, String, double, double, int, String)> _seeds = [
-    ('jabaquara', 'Jabaquara', -23.6486, -46.6406, 82, 'Av. Engenheiro Armando de Arruda Pereira'),
-    ('pinheiros', 'Pinheiros', -23.5670, -46.7020, 74, 'Rua dos Pinheiros'),
-    ('mooca', 'Mooca', -23.5600, -46.5990, 68, 'Rua da Mooca'),
-    ('se', 'Sé', -23.5505, -46.6333, 91, 'Praça da Sé'),
-    ('santo-amaro', 'Santo Amaro', -23.6537, -46.7090, 63, 'Av. Adolfo Pinheiro'),
-    ('itaquera', 'Itaquera', -23.5400, -46.4560, 47, 'Av. Radial Leste'),
-    ('penha', 'Penha', -23.5280, -46.5440, 55, 'Rua Penha de França'),
-    ('santana', 'Santana', -23.5000, -46.6250, 52, 'Av. Cruzeiro do Sul'),
-    ('lapa', 'Lapa', -23.5220, -46.7040, 71, 'Rua Clélia'),
-    ('vila-mariana', 'Vila Mariana', -23.5890, -46.6340, 77, 'Rua Domingos de Morais'),
-    ('butanta', 'Butantã', -23.5710, -46.7260, 38, 'Av. Vital Brasil'),
-    ('campo-limpo', 'Campo Limpo', -23.6240, -46.7570, 33, 'Estrada do Campo Limpo'),
-    ('capao-redondo', 'Capão Redondo', -23.6700, -46.7800, 29, 'Estrada de Itapecerica'),
-    ('brasilandia', 'Brasilândia', -23.4600, -46.6900, 25, 'Av. Elísio Teixeira Leite'),
+  // id, nome, latitude e longitude do centro aproximado do distrito.
+  static const List<(String, String, double, double)> _districtSeeds = [
+    ('jabaquara', 'Jabaquara', -23.6486, -46.6406),
+    ('pinheiros', 'Pinheiros', -23.5670, -46.7020),
+    ('mooca', 'Mooca', -23.5600, -46.5990),
+    ('se', 'Sé', -23.5505, -46.6333),
+    ('santo-amaro', 'Santo Amaro', -23.6537, -46.7090),
+    ('itaquera', 'Itaquera', -23.5400, -46.4560),
+    ('penha', 'Penha', -23.5280, -46.5440),
+    ('santana', 'Santana', -23.5000, -46.6250),
+    ('lapa', 'Lapa', -23.5220, -46.7040),
+    ('vila-mariana', 'Vila Mariana', -23.5890, -46.6340),
+    ('butanta', 'Butantã', -23.5710, -46.7260),
+    ('campo-limpo', 'Campo Limpo', -23.6240, -46.7570),
+    ('capao-redondo', 'Capão Redondo', -23.6700, -46.7800),
+    ('brasilandia', 'Brasilândia', -23.4600, -46.6900),
   ];
 
-  static List<District> _buildDistricts() {
-    final random = Random(7);
+  // distrito, nome do ponto, latitude, longitude, intensidade (1 a 10).
+  static const List<(String, String, double, double, int)> _pointSeeds = [
+    ('jabaquara', 'Terminal Jabaquara', -23.6679, -46.6410, 9),
+    ('jabaquara', 'Feira livre do Jabaquara', -23.6420, -46.6430, 6),
+    ('jabaquara', 'Av. Engenheiro Armando de Arruda Pereira', -23.6400, -46.6500, 5),
+    ('pinheiros', 'Largo da Batata', -23.5662, -46.6913, 9),
+    ('pinheiros', 'Praça Benedito Calixto', -23.5630, -46.6836, 7),
+    ('pinheiros', 'Av. Faria Lima', -23.5700, -46.6930, 8),
+    ('mooca', 'Estação Mooca', -23.5586, -46.5997, 6),
+    ('mooca', 'Rua da Mooca', -23.5600, -46.5990, 6),
+    ('mooca', 'Feira da Mooca', -23.5575, -46.6010, 5),
+    ('se', 'Praça da Sé', -23.5505, -46.6333, 10),
+    ('se', 'Mercado Municipal', -23.5416, -46.6297, 9),
+    ('se', 'Rua 25 de Março', -23.5440, -46.6310, 10),
+    ('se', 'Parque Dom Pedro II', -23.5430, -46.6280, 7),
+    ('santo-amaro', 'Terminal Santo Amaro', -23.6560, -46.7100, 8),
+    ('santo-amaro', 'Largo Treze de Maio', -23.6537, -46.7090, 7),
+    ('itaquera', 'Terminal Itaquera', -23.5400, -46.4710, 8),
+    ('itaquera', 'Arena Corinthians', -23.5453, -46.4742, 7),
+    ('itaquera', 'Parque do Carmo', -23.5793, -46.4640, 5),
+    ('penha', 'Largo do Rosário da Penha', -23.5280, -46.5440, 6),
+    ('penha', 'Rua Penha de França', -23.5230, -46.5400, 5),
+    ('santana', 'Terminal Santana', -23.4990, -46.6250, 7),
+    ('santana', 'Rua Voluntários da Pátria', -23.5050, -46.6280, 6),
+    ('lapa', 'Largo da Lapa', -23.5220, -46.7040, 7),
+    ('lapa', 'Terminal Lapa', -23.5223, -46.7020, 7),
+    ('lapa', 'Rua Clélia', -23.5260, -46.7080, 5),
+    ('vila-mariana', 'Parque Ibirapuera', -23.5874, -46.6576, 9),
+    ('vila-mariana', 'Metrô Vila Mariana', -23.5890, -46.6340, 6),
+    ('vila-mariana', 'Rua Domingos de Morais', -23.5880, -46.6370, 5),
+    ('butanta', 'Cidade Universitária (USP)', -23.5600, -46.7300, 7),
+    ('butanta', 'Av. Vital Brasil', -23.5710, -46.7260, 5),
+    ('campo-limpo', 'Terminal Campo Limpo', -23.6240, -46.7570, 6),
+    ('campo-limpo', 'Largo do Campo Limpo', -23.6260, -46.7600, 4),
+    ('capao-redondo', 'Terminal Capão Redondo', -23.6590, -46.7790, 5),
+    ('capao-redondo', 'Estrada de Itapecerica', -23.6700, -46.7800, 4),
+    ('brasilandia', 'Largo da Brasilândia', -23.4600, -46.6900, 4),
+    ('brasilandia', 'Av. Elísio Teixeira Leite', -23.4630, -46.6930, 4),
+  ];
+
+  static String _districtName(String id) =>
+      _districtSeeds.firstWhere((seed) => seed.$1 == id).$2;
+
+  static List<DisposalPoint> _buildPoints() {
     return [
-      for (final seed in _seeds)
-        District(
-          id: seed.$1,
-          name: seed.$2,
-          position: LatLng(seed.$3, seed.$4),
-          demandIndex: seed.$5,
-          binCount: _binSeedsFor(seed.$1).length,
-          history: [
-            for (var week = 0; week < 7; week++)
-              (seed.$5 + random.nextInt(25) - 12).clamp(5, 100),
-            seed.$5,
-          ],
+      for (var i = 0; i < _pointSeeds.length; i++)
+        DisposalPoint(
+          id: 'pt-${(i + 1).toString().padLeft(2, '0')}',
+          name: _pointSeeds[i].$2,
+          districtId: _pointSeeds[i].$1,
+          position: LatLng(_pointSeeds[i].$3, _pointSeeds[i].$4),
+          intensity: _pointSeeds[i].$5,
         ),
     ];
   }
 
-  static const int _binTotal = 20;
+  /// A demanda de cada distrito vem dos pontos de descarte dele: soma das
+  /// intensidades, com raiz quadrada para os distritos menores não ficarem
+  /// todos perto de zero. O distrito com mais descarte vale 100.
+  static List<District> _buildDistricts() {
+    final random = Random(7);
+    final totals = <String, int>{for (final seed in _districtSeeds) seed.$1: 0};
+    for (final point in disposalPoints) {
+      totals[point.districtId] = totals[point.districtId]! + point.intensity;
+    }
+    final maxTotal = totals.values.reduce(max);
 
-  static List<int> _binSeedsFor(String districtId) {
-    final index = _seeds.indexWhere((seed) => seed.$1 == districtId);
-    return [for (var i = 0; i < _binTotal; i++) if (i % _seeds.length == index) i];
+    return [
+      for (final seed in _districtSeeds)
+        _buildDistrict(seed, totals[seed.$1]! / maxTotal, random),
+    ];
+  }
+
+  static District _buildDistrict(
+    (String, String, double, double) seed,
+    double share,
+    Random random,
+  ) {
+    final index = (100 * sqrt(share)).round().clamp(5, 100);
+    return District(
+      id: seed.$1,
+      name: seed.$2,
+      position: LatLng(seed.$3, seed.$4),
+      demandIndex: index,
+      binCount: bins.where((bin) => bin.districtId == seed.$1).length,
+      history: [
+        for (var week = 0; week < 7; week++) (index + random.nextInt(25) - 12).clamp(5, 100),
+        index,
+      ],
+    );
   }
 
   static _World _buildWorld() {
     final random = Random(42);
+
+    // Uma lixeira por ponto; os pontos mais movimentados ganham uma segunda.
+    final specs = <(DisposalPoint, int)>[
+      for (final point in disposalPoints) ...[
+        (point, 1),
+        if (point.intensity >= SimulationConfig.busyPointIntensity) (point, 2),
+      ],
+    ];
+
+    // Pontos mais movimentados enchem mais rápido.
+    final fills = [
+      for (final spec in specs)
+        (18 + spec.$1.intensity * 5 + random.nextInt(25) - 12).clamp(8, 89),
+    ];
+
+    // As três lixeiras dos pontos mais movimentados já estão quase cheias.
+    final busiest = [for (var i = 0; i < specs.length; i++) i]..sort((a, b) {
+        final byIntensity = specs[b].$1.intensity.compareTo(specs[a].$1.intensity);
+        return byIntensity != 0 ? byIntensity : a.compareTo(b);
+      });
+    const nearlyFull = [96, 91, 88];
+    for (var i = 0; i < nearlyFull.length; i++) {
+      fills[busiest[i]] = nearlyFull[i];
+    }
+    final keepFillStatus = busiest.take(nearlyFull.length).toSet();
+
     final readings = <String, List<Reading>>{};
     final bins = [
-      for (var i = 0; i < _binTotal; i++)
-        _buildBin(i, _seeds[i % _seeds.length], random, readings),
+      for (var i = 0; i < specs.length; i++)
+        _buildBin(
+          index: i,
+          point: specs[i].$1,
+          number: specs[i].$2,
+          fill: fills[i],
+          keepFillStatus: keepFillStatus.contains(i),
+          random: random,
+          readingsOut: readings,
+        ),
     ];
     return _World(bins, Map.unmodifiable(readings));
   }
 
-  static Bin _buildBin(
-    int index,
-    (String, String, double, double, int, String) seed,
-    Random random,
-    Map<String, List<Reading>> readingsOut,
-  ) {
-    final fill = switch (index) {
-      0 => 96,
-      1 => 91,
-      9 => 88,
-      _ => 12 + random.nextInt(78),
-    };
-    final status = switch (index) {
-      3 || 10 || 17 => BinStatus.maintenance,
-      6 => BinStatus.offline,
-      _ => fill >= 90
-          ? BinStatus.full
-          : fill >= 70
-              ? BinStatus.almostFull
-              : BinStatus.operating,
-    };
-    final number = index ~/ _seeds.length + 1;
+  static Bin _buildBin({
+    required int index,
+    required DisposalPoint point,
+    required int number,
+    required int fill,
+    required bool keepFillStatus,
+    required Random random,
+    required Map<String, List<Reading>> readingsOut,
+  }) {
+    final statusFromFill = fill >= 90
+        ? BinStatus.full
+        : fill >= 70
+            ? BinStatus.almostFull
+            : BinStatus.operating;
+    final status = keepFillStatus
+        ? statusFromFill
+        : switch (index) {
+            6 => BinStatus.offline,
+            _ when index % 11 == 4 => BinStatus.maintenance,
+            _ => statusFromFill,
+          };
+
     final id = 'bin-${(index + 1).toString().padLeft(2, '0')}';
-    final readings = _readingsFor(id, fill, random);
+    final readings = _readingsFor(id, fill, point.intensity, random);
     final byMaterial = <WasteMaterial, double>{
       for (final material in WasteMaterial.values)
         material: readings
@@ -109,17 +215,23 @@ abstract final class MockData {
             .fold(0.0, (sum, reading) => sum + (reading.kgByMaterial[material] ?? 0)),
     };
     final hoursSinceCollection = max(2, (fill / (10 + random.nextInt(8))) * 24).round();
+    final isBusy = point.intensity >= SimulationConfig.busyPointIntensity;
+    final side = number == 1 ? 1 : -1;
+    final districtName = _districtName(point.districtId);
 
     readingsOut[id] = readings;
     return Bin(
       id: id,
-      name: 'Lixeira ${seed.$2} ${number.toString().padLeft(2, '0')}',
-      address: '${seed.$6}, ${100 + random.nextInt(900)} - ${seed.$2}',
-      districtId: seed.$1,
-      districtName: seed.$2,
+      name: 'Lixeira ${point.name}${isBusy ? ' 0$number' : ''}',
+      address: '${point.name}, $districtName',
+      districtId: point.districtId,
+      districtName: districtName,
+      pointId: point.id,
+      pointName: point.name,
+      // Até ~50 m do ponto de descarte.
       position: LatLng(
-        seed.$3 + (random.nextDouble() - 0.5) * 0.016,
-        seed.$4 + (random.nextDouble() - 0.5) * 0.016,
+        point.position.latitude + side * (0.0002 + random.nextDouble() * 0.0002),
+        point.position.longitude - side * (0.0002 + random.nextDouble() * 0.0002),
       ),
       fillPercent: fill,
       status: status,
@@ -129,9 +241,15 @@ abstract final class MockData {
     );
   }
 
-  static List<Reading> _readingsFor(String binId, int currentFill, Random random) {
+  /// Quanto cada lixeira coleta depende da intensidade do ponto onde está.
+  static List<Reading> _readingsFor(
+    String binId,
+    int currentFill,
+    int intensity,
+    Random random,
+  ) {
     final perDay = 10 + random.nextInt(8);
-    final scale = 0.6 + random.nextDouble() * 0.9;
+    final scale = (0.25 + intensity * 0.12) * (0.85 + random.nextDouble() * 0.3);
     return [
       for (var day = 0; day < readingDays; day++)
         Reading(
@@ -149,9 +267,12 @@ abstract final class MockData {
   }
 
   static List<Alert> _buildAlerts() {
-    final byFill = [...bins]..sort((a, b) => b.fillPercent.compareTo(a.fillPercent));
+    final working = bins.where((bin) => bin.status.isWorking).toList();
+    final byFill = [...working]..sort((a, b) => b.fillPercent.compareTo(a.fillPercent));
     final offline = bins.firstWhere((bin) => bin.status == BinStatus.offline);
-    final anomaly = bins.firstWhere((bin) => bin.id == 'bin-05');
+    final anomaly = working.firstWhere(
+      (bin) => bin.status == BinStatus.operating && !byFill.take(6).contains(bin),
+    );
     final lowCollection = districts.firstWhere((district) => district.id == 'itaquera');
 
     List<double> fillTrend(Bin bin) => [
@@ -176,7 +297,7 @@ abstract final class MockData {
         status: status,
         confidence: confidence,
         createdAt: now.subtract(Duration(minutes: minutesAgo)),
-        location: '${bin.districtName} · ${bin.address}',
+        location: bin.address,
         binId: bin.id,
         detected:
             'A lixeira está com ${bin.fillPercent}% de enchimento e enche cerca de 2% por hora. '
@@ -207,7 +328,7 @@ abstract final class MockData {
         status: AlertStatus.open,
         confidence: Confidence.high,
         createdAt: now.subtract(const Duration(hours: 18)),
-        location: '${offline.districtName} · ${offline.address}',
+        location: offline.address,
         binId: offline.id,
         detected: 'O sensor não envia leituras há 18 horas.',
         evidence: [for (var i = 0; i < 7; i++) i < 5 ? 1.0 : 0.0],
@@ -225,7 +346,7 @@ abstract final class MockData {
         status: AlertStatus.open,
         confidence: Confidence.low,
         createdAt: now.subtract(const Duration(hours: 9)),
-        location: '${anomaly.districtName} · ${anomaly.address}',
+        location: anomaly.address,
         binId: anomaly.id,
         detected: 'A quantidade de vidro foi 2,4 vezes maior que a média dos últimos 30 dias.',
         evidence: const [3.1, 2.8, 3.4, 2.9, 3.0, 7.4, 7.1],

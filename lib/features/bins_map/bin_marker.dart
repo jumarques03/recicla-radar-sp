@@ -67,7 +67,7 @@ class BinLegend extends StatelessWidget {
     final theme = Theme.of(context);
     return Semantics(
       container: true,
-      label: 'Legenda: operando, quase cheia, cheia, em manutenção e sem sinal.',
+      label: 'Legenda: operando, quase cheia, cheia, em manutenção, sem sinal e ponto de descarte.',
       excludeSemantics: true,
       child: Card(
         child: Padding(
@@ -88,6 +88,17 @@ class BinLegend extends StatelessWidget {
                     ],
                   ),
                 ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.delete_sweep_outlined, size: 18, color: theme.colorScheme.onSurface),
+                    const SizedBox(width: 6),
+                    Text('Ponto de descarte', style: theme.textTheme.bodySmall),
+                  ],
+                ),
+              ),
             ],
           ),
         ),

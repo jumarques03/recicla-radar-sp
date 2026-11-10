@@ -15,6 +15,7 @@ class OverviewSummary {
     required this.previousKg,
     required this.operatingPercent,
     required this.divertedKg,
+    required this.recoveryRate,
     required this.series,
     required this.seriesUnit,
     required this.byMaterial,
@@ -27,6 +28,9 @@ class OverviewSummary {
 
   /// Material que deixou de ir para o aterro e foi para cooperativas.
   final double divertedKg;
+
+  /// Parte do coletado que é reaproveitada (suposição, de 0 a 1).
+  final double recoveryRate;
   final List<SeriesPoint> series;
 
   /// "dia" ou "semana".
