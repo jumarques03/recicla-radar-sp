@@ -127,7 +127,8 @@ class SettingsScreen extends StatelessWidget {
               onChanged: settings.setConsent,
               title: const Text('Permito o uso dos meus dados pessoais'),
               subtitle: const Text(
-                'Nome e e-mail são usados só para identificar quem registra vistorias.',
+                'Ligado, as vistorias levam o seu nome. Desligado, elas são registradas '
+                'de forma anônima.',
               ),
             ),
           ),

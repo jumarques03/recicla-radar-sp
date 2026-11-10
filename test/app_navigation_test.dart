@@ -90,9 +90,9 @@ void main() {
       // Formulário de vistoria abre com a lixeira já preenchida.
       await tester.tap(find.text('Registrar vistoria'));
       await tester.pumpAndSettle(const Duration(seconds: 1));
-      await scrollTo(tester, 'Enviar vistoria');
-      expect(find.text('Enviar vistoria'), findsOneWidget);
-      await tester.tap(find.text('Enviar vistoria'));
+      await scrollTo(tester, 'Salvar vistoria');
+      expect(find.text('Salvar vistoria'), findsOneWidget);
+      await tester.tap(find.text('Salvar vistoria'));
       await tester.pumpAndSettle();
       expect(find.text('Confira os campos marcados em vermelho.'), findsOneWidget);
       expect(tester.takeException(), isNull);

@@ -6,6 +6,7 @@ import 'package:recicla_radar_sp/data/local/alert_status_store.dart';
 import 'package:recicla_radar_sp/data/models/alert.dart';
 import 'package:recicla_radar_sp/data/repositories/data_repositories.dart';
 import 'package:recicla_radar_sp/data/repositories/engine_alert_repository.dart';
+import 'package:recicla_radar_sp/data/repositories/local_inspection_repository.dart';
 import 'package:recicla_radar_sp/state/alerts_provider.dart';
 import 'package:recicla_radar_sp/state/loadable_notifier.dart';
 
@@ -48,7 +49,7 @@ void main() {
   group('EngineAlertRepository', () {
     test('o status escolhido continua depois de recalcular os alertas', () async {
       final prefs = await freshPrefs();
-      final first = EngineAlertRepository(SharedPrefsAlertStatusStore(prefs));
+      final first = EngineAlertRepository(SharedPrefsAlertStatusStore(prefs), LocalInspectionRepository(prefs));
       final alerts = await first.fetchAlerts(fillThreshold: 80);
       final target = alerts.first;
       expect(target.status, AlertStatus.open);
@@ -56,7 +57,7 @@ void main() {
       final updated = await first.updateStatus(target.id, AlertStatus.resolved);
       expect(updated.status, AlertStatus.resolved);
 
-      final second = EngineAlertRepository(SharedPrefsAlertStatusStore(prefs));
+      final second = EngineAlertRepository(SharedPrefsAlertStatusStore(prefs), LocalInspectionRepository(prefs));
       final reloaded = await second.fetchAlerts(fillThreshold: 80);
       expect(reloaded.firstWhere((a) => a.id == target.id).status, AlertStatus.resolved);
       expect(reloaded.where((a) => a.id != target.id).every((a) => a.status == AlertStatus.open), isTrue);
@@ -64,7 +65,7 @@ void main() {
 
     test('mudar o limiar recalcula os alertas sem perder o status', () async {
       final prefs = await freshPrefs();
-      final repository = EngineAlertRepository(SharedPrefsAlertStatusStore(prefs));
+      final repository = EngineAlertRepository(SharedPrefsAlertStatusStore(prefs), LocalInspectionRepository(prefs));
       final normal = await repository.fetchAlerts(fillThreshold: 80);
       final target = normal.firstWhere((a) => a.type == AlertType.fillPrediction);
       await repository.updateStatus(target.id, AlertStatus.discarded);
@@ -78,7 +79,7 @@ void main() {
   group('alertas vistos', () {
     Future<AlertsProvider> providerOn(SharedPreferences prefs, {int threshold = 80}) async {
       final provider = AlertsProvider(
-        EngineAlertRepository(SharedPrefsAlertStatusStore(prefs)),
+        EngineAlertRepository(SharedPrefsAlertStatusStore(prefs), LocalInspectionRepository(prefs)),
         SharedPrefsAlertSeenStore(prefs),
         threshold,
       );

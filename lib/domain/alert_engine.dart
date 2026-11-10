@@ -2,12 +2,14 @@ import 'package:recicla_radar_sp/core/utils/formatters.dart';
 import 'package:recicla_radar_sp/data/models/alert.dart';
 import 'package:recicla_radar_sp/data/models/bin.dart';
 import 'package:recicla_radar_sp/data/models/district.dart';
+import 'package:recicla_radar_sp/data/models/inspection.dart';
 import 'package:recicla_radar_sp/data/models/reading.dart';
 import 'package:recicla_radar_sp/data/models/waste_material.dart';
 import 'package:recicla_radar_sp/domain/collection_drop_rule.dart';
 import 'package:recicla_radar_sp/domain/coverage_rule.dart';
 import 'package:recicla_radar_sp/domain/fill_prediction_rule.dart';
 import 'package:recicla_radar_sp/domain/fill_trend.dart';
+import 'package:recicla_radar_sp/domain/inspection_rule.dart';
 import 'package:recicla_radar_sp/domain/material_anomaly_rule.dart';
 import 'package:recicla_radar_sp/domain/signal_loss_rule.dart';
 
@@ -19,6 +21,7 @@ class AlertEngineInput {
     required this.readingsByBin,
     required this.districts,
     required this.fillThreshold,
+    this.inspections = const [],
   });
 
   final DateTime now;
@@ -30,6 +33,9 @@ class AlertEngineInput {
 
   /// Enchimento (%) a partir do qual uma lixeira gera alerta (Configurações).
   final int fillThreshold;
+
+  /// Vistorias registradas pelos fiscais.
+  final List<Inspection> inspections;
 }
 
 /// Calcula os alertas a partir dos dados. Ele só sugere: o status de cada
@@ -44,12 +50,14 @@ class AlertEngine {
     this.anomaly = const MaterialAnomalyRule(),
     this.collectionDrop = const CollectionDropRule(),
     this.coverage = const CoverageRule(),
+    this.inspection = const InspectionRule(),
   });
 
   final SignalLossRule signalLoss;
   final MaterialAnomalyRule anomaly;
   final CollectionDropRule collectionDrop;
   final CoverageRule coverage;
+  final InspectionRule inspection;
 
   List<Alert> run(AlertEngineInput input) {
     final alerts = <Alert>[
@@ -58,6 +66,7 @@ class AlertEngine {
       ..._anomalyAlerts(input),
       ..._collectionAlerts(input),
       ..._coverageAlerts(input),
+      ..._inspectionAlerts(input),
     ];
     // Mais graves primeiro; em empate, o mais recente.
     alerts.sort((a, b) {
@@ -94,6 +103,7 @@ class AlertEngine {
         createdAt: _fillCreatedAt(input.now, bin, trend, input.fillThreshold),
         location: bin.address,
         binId: bin.id,
+        districtId: bin.districtId,
         detected: trend == null
             ? 'A lixeira está com ${bin.fillPercent}% de enchimento, acima do limite de '
                 '${input.fillThreshold}%. Ainda não há leituras suficientes desde a última coleta '
@@ -163,6 +173,7 @@ class AlertEngine {
         createdAt: bin.lastSignalAt,
         location: bin.address,
         binId: bin.id,
+        districtId: bin.districtId,
         detected: 'O sensor não envia leituras há ${hit.hours} horas.',
         evidence: [
           for (var back = 6; back >= 0; back--)
@@ -201,6 +212,7 @@ class AlertEngine {
           createdAt: readings[hit.runDays - 1].date,
           location: bin.address,
           binId: bin.id,
+          districtId: bin.districtId,
           detected: 'A quantidade de $material0 foi ${Formatters.decimal(hit.ratio)} vezes maior '
               'que a média de ${Formatters.kg(hit.baselineKg)} por dia, por ${hit.runDays} dias seguidos.',
           evidence: _lastSevenDays(readings, (r) => r.kgByMaterial[material] ?? 0),
@@ -272,6 +284,7 @@ class AlertEngine {
         confidence: hit.confidence,
         createdAt: input.now,
         location: district.name,
+        districtId: district.id,
         detected: 'O volume coletado nos últimos 7 dias caiu '
             '${Formatters.decimal(hit.dropPercent)}% em relação à média das 4 semanas anteriores.',
         evidence: _districtDailyKg(bins, input.readingsByBin, today),
@@ -307,6 +320,7 @@ class AlertEngine {
         confidence: Confidence.medium,
         createdAt: input.now,
         location: district.name,
+        districtId: district.id,
         detected: 'O índice de demanda do distrito é ${district.demandIndex}, mas só '
             '${working == 1 ? 'há 1 lixeira funcionando' : 'há $working lixeiras funcionando'}.',
         evidence: [for (final value in district.history) value.toDouble()],
@@ -315,6 +329,46 @@ class AlertEngine {
         confidenceReason: 'O índice de demanda é uma estimativa e se manteve alto nas últimas semanas.',
         limitations: 'O índice não considera o espaço disponível nem a distância entre as lixeiras.',
         suggestedAction: 'Avalie instalar ou reativar lixeiras nos pontos de maior descarte do distrito.',
+      ));
+    }
+    return alerts;
+  }
+
+  // ----------------------------------------------------------------- vistorias
+
+  List<Alert> _inspectionAlerts(AlertEngineInput input) {
+    final alerts = <Alert>[];
+    final binsById = {for (final bin in input.bins) bin.id: bin};
+
+    for (final item in input.inspections) {
+      final bin = binsById[item.binId];
+      final hit = inspection.evaluate(item, input.now);
+      if (bin == null || hit == null) continue;
+
+      final readings = input.readingsByBin[bin.id] ?? const <Reading>[];
+      alerts.add(Alert(
+        id: 'inspection:${item.id}',
+        title: 'Vistoria aponta ${item.type.label.toLowerCase()} em ${bin.name}',
+        type: AlertType.inspection,
+        severity: hit.severity,
+        status: AlertStatus.open,
+        confidence: Confidence.high,
+        createdAt: item.dateTime,
+        location: bin.address,
+        binId: bin.id,
+        districtId: bin.districtId,
+        detected: '${item.authorName == null ? 'Um fiscal registrou' : '${item.authorName} registrou'} '
+            'em ${Formatters.dateTime(item.dateTime)}: "${item.description}". '
+            'Gravidade ${item.severity.label.toLowerCase()}'
+            '${item.needsAction ? ', com pedido de coleta ou reparo' : ''}.',
+        evidence: _lastSevenDays(readings, (r) => r.fillPercent.toDouble()),
+        evidenceLabel: 'Enchimento (%) nos últimos 7 dias, para contexto',
+        rule: inspection.ruleText,
+        confidenceReason: 'A ocorrência foi vista em campo por uma pessoa, não estimada pelo sistema.',
+        limitations: 'É a observação de uma pessoa e ainda não foi confirmada por outra vistoria.',
+        suggestedAction: item.needsAction
+            ? 'Envie uma equipe de coleta ou reparo e marque o alerta como resolvido quando terminar.'
+            : 'Acompanhe esta lixeira e registre uma nova vistoria se o problema continuar.',
       ));
     }
     return alerts;

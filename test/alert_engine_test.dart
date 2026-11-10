@@ -16,8 +16,12 @@ List<Alert> runEngine({int threshold = 80}) => const AlertEngine().run(AlertEngi
 void main() {
   final alerts = runEngine();
 
-  test('os dados geram alertas dos cinco tipos', () {
-    expect(alerts.map((a) => a.type).toSet(), AlertType.values.toSet());
+  test('os dados geram alertas dos cinco tipos calculados a partir das leituras', () {
+    // O tipo "vistoria" só aparece quando há vistorias registradas (veja inspection_flow_test).
+    expect(
+      alerts.map((a) => a.type).toSet(),
+      AlertType.values.where((type) => type != AlertType.inspection).toSet(),
+    );
   });
 
   test('há alertas de gravidades e confianças diferentes', () {

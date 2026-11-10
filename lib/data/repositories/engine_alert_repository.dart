@@ -7,9 +7,10 @@ import 'package:recicla_radar_sp/domain/alert_engine.dart';
 /// Alertas calculados pelo motor a partir dos dados das lixeiras. O status de
 /// cada alerta vem do aparelho: o motor sugere, a pessoa decide.
 class EngineAlertRepository implements AlertRepository {
-  EngineAlertRepository(this._store, {this._engine = const AlertEngine()});
+  EngineAlertRepository(this._store, this._inspections, {this._engine = const AlertEngine()});
 
   final AlertStatusStore _store;
+  final InspectionRepository _inspections;
   final AlertEngine _engine;
   List<Alert> _current = const [];
 
@@ -23,6 +24,7 @@ class EngineAlertRepository implements AlertRepository {
       readingsByBin: MockData.readingsByBin,
       districts: MockData.districts,
       fillThreshold: fillThreshold,
+      inspections: await _inspections.fetchAll(),
     ));
     final saved = _store.load();
     _current = [

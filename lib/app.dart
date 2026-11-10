@@ -14,6 +14,7 @@ import 'package:recicla_radar_sp/data/osm/osm_boundary_repository.dart';
 import 'package:recicla_radar_sp/data/repositories/auth_repository.dart';
 import 'package:recicla_radar_sp/data/repositories/data_repositories.dart';
 import 'package:recicla_radar_sp/data/repositories/engine_alert_repository.dart';
+import 'package:recicla_radar_sp/data/repositories/local_inspection_repository.dart';
 import 'package:recicla_radar_sp/data/repositories/mock_auth_repository.dart';
 import 'package:recicla_radar_sp/data/repositories/mock_repositories.dart';
 import 'package:recicla_radar_sp/state/alerts_provider.dart';
@@ -21,6 +22,7 @@ import 'package:recicla_radar_sp/state/bins_provider.dart';
 import 'package:recicla_radar_sp/state/boundaries_provider.dart';
 import 'package:recicla_radar_sp/state/districts_provider.dart';
 import 'package:recicla_radar_sp/state/filters_provider.dart';
+import 'package:recicla_radar_sp/state/inspections_provider.dart';
 import 'package:recicla_radar_sp/state/overview_provider.dart';
 import 'package:recicla_radar_sp/state/session_provider.dart';
 import 'package:recicla_radar_sp/state/settings_provider.dart';
@@ -56,13 +58,12 @@ class ReciclaRadarApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bins = binRepository ?? MockBinRepository();
+    final inspections = inspectionRepository ?? LocalInspectionRepository(prefs);
 
     return MultiProvider(
       providers: [
         Provider<BinRepository>.value(value: bins),
-        Provider<InspectionRepository>.value(
-          value: inspectionRepository ?? MockInspectionRepository(),
-        ),
+        ChangeNotifierProvider(create: (_) => InspectionsProvider(inspections)..load()),
         ChangeNotifierProvider(
           create: (_) => BoundariesProvider(
             boundaryRepository ??
@@ -80,7 +81,7 @@ class ReciclaRadarApp extends StatelessWidget {
         ),
         ChangeNotifierProxyProvider<SettingsProvider, AlertsProvider>(
           create: (context) => AlertsProvider(
-            alertRepository ?? EngineAlertRepository(SharedPrefsAlertStatusStore(prefs)),
+            alertRepository ?? EngineAlertRepository(SharedPrefsAlertStatusStore(prefs), inspections),
             alertSeenStore ?? SharedPrefsAlertSeenStore(prefs),
             context.read<SettingsProvider>().fillThreshold,
           )..load(),

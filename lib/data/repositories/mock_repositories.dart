@@ -3,7 +3,6 @@ import 'package:recicla_radar_sp/data/mock/simulation_config.dart';
 import 'package:recicla_radar_sp/data/models/bin.dart';
 import 'package:recicla_radar_sp/data/models/disposal_point.dart';
 import 'package:recicla_radar_sp/data/models/district.dart';
-import 'package:recicla_radar_sp/data/models/inspection.dart';
 import 'package:recicla_radar_sp/data/models/overview_summary.dart';
 import 'package:recicla_radar_sp/data/models/reading.dart';
 import 'package:recicla_radar_sp/data/models/waste_material.dart';
@@ -39,16 +38,6 @@ class MockDistrictRepository implements DistrictRepository {
   Future<List<District>> fetchDistricts() async {
     await _simulateNetwork();
     return MockData.districts;
-  }
-}
-
-class MockInspectionRepository implements InspectionRepository {
-  final List<Inspection> submitted = [];
-
-  @override
-  Future<void> submit(Inspection inspection) async {
-    await _simulateNetwork();
-    submitted.add(inspection);
   }
 }
 

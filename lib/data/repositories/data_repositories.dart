@@ -34,6 +34,9 @@ abstract interface class AlertRepository {
 
 abstract interface class InspectionRepository {
   Future<void> submit(Inspection inspection);
+
+  /// Todas as vistorias salvas, da mais recente para a mais antiga.
+  Future<List<Inspection>> fetchAll();
 }
 
 abstract interface class OverviewRepository {

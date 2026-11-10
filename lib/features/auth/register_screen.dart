@@ -7,6 +7,7 @@ import 'package:recicla_radar_sp/core/utils/validators.dart';
 import 'package:recicla_radar_sp/data/models/app_user.dart';
 import 'package:recicla_radar_sp/features/auth/auth_scaffold.dart';
 import 'package:recicla_radar_sp/state/session_provider.dart';
+import 'package:recicla_radar_sp/state/settings_provider.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -37,6 +38,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     final session = context.read<SessionProvider>();
+    final settings = context.read<SettingsProvider>();
     setState(() {
       _busy = true;
       _error = null;
@@ -48,6 +50,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         password: _password.text,
         role: _role,
       );
+      // Quem marcou o consentimento no cadastro já fica com ele ligado nas Configurações.
+      await settings.setConsent(true);
       // O roteador leva sozinho para a tela inicial quando a sessão começa.
     } on AppException catch (e) {
       if (mounted) setState(() => _error = e.message);

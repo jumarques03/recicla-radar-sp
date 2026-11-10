@@ -2,14 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import 'package:recicla_radar_sp/core/router/app_routes.dart';
 import 'package:recicla_radar_sp/core/theme/app_spacing.dart';
 import 'package:recicla_radar_sp/core/utils/formatters.dart';
 import 'package:recicla_radar_sp/core/utils/validators.dart';
 import 'package:recicla_radar_sp/core/widgets/state_views.dart';
 import 'package:recicla_radar_sp/data/models/bin.dart';
 import 'package:recicla_radar_sp/data/models/inspection.dart';
-import 'package:recicla_radar_sp/data/repositories/data_repositories.dart';
+import 'package:recicla_radar_sp/domain/inspection_rule.dart';
+import 'package:recicla_radar_sp/state/alerts_provider.dart';
 import 'package:recicla_radar_sp/state/bins_provider.dart';
+import 'package:recicla_radar_sp/state/inspections_provider.dart';
+import 'package:recicla_radar_sp/state/session_provider.dart';
+import 'package:recicla_radar_sp/state/settings_provider.dart';
 
 class InspectionScreen extends StatefulWidget {
   const InspectionScreen({super.key, this.binId});
@@ -23,6 +28,10 @@ class InspectionScreen extends StatefulWidget {
 
 class _InspectionScreenState extends State<InspectionScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _binKey = GlobalKey<FormFieldState<String>>();
+  final _typeKey = GlobalKey<FormFieldState<OccurrenceType>>();
+  final _descriptionKey = GlobalKey<FormFieldState<String>>();
+  final _dateKey = GlobalKey<FormFieldState<String>>();
   final _description = TextEditingController();
   final _dateText = TextEditingController();
   late String? _binId = widget.binId;
@@ -66,34 +75,70 @@ class _InspectionScreenState extends State<InspectionScreen> {
     _formKey.currentState?.validate();
   }
 
+  /// Rola a tela até o primeiro campo com erro, na ordem em que aparecem.
+  void _scrollToFirstError() {
+    final fields = <GlobalKey<FormFieldState<dynamic>>>[
+      _binKey,
+      _typeKey,
+      _descriptionKey,
+      _dateKey,
+    ];
+    for (final field in fields) {
+      if (field.currentState?.hasError ?? false) {
+        Scrollable.ensureVisible(
+          field.currentContext!,
+          alignment: 0.15,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+        return;
+      }
+    }
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) {
+      _scrollToFirstError();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Confira os campos marcados em vermelho.')),
       );
       return;
     }
-    final repository = context.read<InspectionRepository>();
+    final inspections = context.read<InspectionsProvider>();
+    final alerts = context.read<AlertsProvider>();
+    final consent = context.read<SettingsProvider>().consent;
+    final author = context.read<SessionProvider>().user?.name;
+
+    final inspection = Inspection(
+      id: 'insp-${DateTime.now().microsecondsSinceEpoch}',
+      binId: _binId!,
+      type: _type!,
+      severity: _severity,
+      description: _description.text.trim(),
+      dateTime: _dateTime!,
+      needsAction: _needsAction,
+      // Sem consentimento para o uso dos dados pessoais, a vistoria é anônima.
+      authorName: consent ? author : null,
+    );
+
     setState(() => _busy = true);
     try {
-      await repository.submit(Inspection(
-        binId: _binId!,
-        type: _type!,
-        severity: _severity,
-        description: _description.text.trim(),
-        dateTime: _dateTime!,
-        needsAction: _needsAction,
-      ));
+      await inspections.submit(inspection);
+      // Uma vistoria grave gera um alerta; recalcula para ele aparecer na hora.
+      alerts.load();
       if (!mounted) return;
+      // O botão volta ao normal antes do aviso, para a rodinha não girar atrás dele.
+      setState(() => _busy = false);
+      final createdAlert = const InspectionRule().evaluate(inspection, DateTime.now()) != null;
       await showDialog<void>(
         context: context,
         builder: (context) => AlertDialog(
           icon: Icon(Icons.check_circle_outline, color: Theme.of(context).colorScheme.secondary),
-          title: const Text('Vistoria enviada'),
+          title: const Text('Vistoria registrada'),
           content: Text(
-            _needsAction
-                ? 'Obrigado! Avisamos que esta lixeira precisa de coleta ou reparo.'
-                : 'Obrigado! Sua vistoria foi registrada.',
+            createdAlert
+                ? 'Obrigado! Esta vistoria gerou um alerta para a equipe. Você o encontra na aba Alertas.'
+                : 'Obrigado! Sua vistoria foi salva neste aparelho.',
           ),
           actions: [
             FilledButton(
@@ -107,7 +152,7 @@ class _InspectionScreenState extends State<InspectionScreen> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Não foi possível enviar. Confira a internet e tente de novo.')),
+          const SnackBar(content: Text('Não foi possível salvar a vistoria. Tente de novo.')),
         );
       }
     } finally {
@@ -118,6 +163,8 @@ class _InspectionScreenState extends State<InspectionScreen> {
   @override
   Widget build(BuildContext context) {
     final bins = context.watch<BinsProvider>();
+    final consent = context.select<SettingsProvider, bool>((s) => s.consent);
+    final authorName = context.select<SessionProvider, String?>((s) => s.user?.name);
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -132,7 +179,10 @@ class _InspectionScreenState extends State<InspectionScreen> {
                 child: ListView(
                   padding: const EdgeInsets.all(AppSpacing.md),
                   children: [
+                    _ConsentNote(consent: consent, authorName: authorName),
+                    const SizedBox(height: AppSpacing.md),
                     DropdownButtonFormField<String>(
+                      key: _binKey,
                       initialValue: _binId,
                       isExpanded: true,
                       autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -152,6 +202,7 @@ class _InspectionScreenState extends State<InspectionScreen> {
                     ),
                     const SizedBox(height: AppSpacing.md),
                     DropdownButtonFormField<OccurrenceType>(
+                      key: _typeKey,
                       initialValue: _type,
                       isExpanded: true,
                       autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -179,6 +230,7 @@ class _InspectionScreenState extends State<InspectionScreen> {
                     ),
                     const SizedBox(height: AppSpacing.lg),
                     TextFormField(
+                      key: _descriptionKey,
                       controller: _description,
                       minLines: 3,
                       maxLines: 6,
@@ -194,6 +246,7 @@ class _InspectionScreenState extends State<InspectionScreen> {
                     ),
                     const SizedBox(height: AppSpacing.md),
                     TextFormField(
+                      key: _dateKey,
                       controller: _dateText,
                       readOnly: true,
                       onTap: _pickDateTime,
@@ -226,13 +279,63 @@ class _InspectionScreenState extends State<InspectionScreen> {
                               width: 20,
                               child: CircularProgressIndicator(strokeWidth: 3),
                             )
-                          : const Icon(Icons.send),
-                      label: const Text('Enviar vistoria'),
+                          : const Icon(Icons.save_outlined),
+                      label: const Text('Salvar vistoria'),
                     ),
                   ],
                 ),
               ),
             ),
+    );
+  }
+}
+
+/// Avisa se a vistoria vai levar o nome da pessoa ou ser anônima.
+class _ConsentNote extends StatelessWidget {
+  const _ConsentNote({required this.consent, required this.authorName});
+
+  final bool consent;
+  final String? authorName;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
+    return Semantics(
+      container: true,
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.sm + 4),
+        decoration: BoxDecoration(
+          color: scheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(consent ? Icons.badge_outlined : Icons.visibility_off_outlined, color: scheme.primary),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    consent
+                        ? 'Esta vistoria será registrada com o seu nome${authorName == null ? '' : ' ($authorName)'}.'
+                        : 'Esta vistoria será registrada de forma anônima, sem o seu nome.',
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                  if (!consent)
+                    TextButton(
+                      onPressed: () => context.pushNamed(AppRoutes.settings),
+                      child: const Text('Mudar nas Configurações'),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

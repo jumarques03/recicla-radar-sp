@@ -3,7 +3,8 @@ enum AlertType {
   anomaly('Leitura fora do padrão'),
   offline('Sem sinal'),
   lowCollection('Coleta abaixo do esperado'),
-  lowCoverage('Demanda sem cobertura');
+  lowCoverage('Demanda sem cobertura'),
+  inspection('Vistoria de campo');
 
   const AlertType(this.label);
   final String label;
@@ -59,6 +60,7 @@ class Alert {
     required this.limitations,
     required this.suggestedAction,
     this.binId,
+    this.districtId,
   });
 
   final String id;
@@ -70,6 +72,9 @@ class Alert {
   final DateTime createdAt;
   final String location;
   final String? binId;
+
+  /// Distrito do alerta, para ligar o alerta ao mapa de demanda e às lixeiras.
+  final String? districtId;
   final String detected;
 
   /// Série curta usada no mini gráfico de evidência.
@@ -91,6 +96,7 @@ class Alert {
       createdAt: createdAt,
       location: location,
       binId: binId,
+      districtId: districtId,
       detected: detected,
       evidence: evidence,
       evidenceLabel: evidenceLabel,
