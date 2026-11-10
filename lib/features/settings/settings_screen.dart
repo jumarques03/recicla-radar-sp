@@ -69,8 +69,12 @@ class SettingsScreen extends StatelessWidget {
                       label: Text('Escuro'),
                     ),
                   ],
-                  // O ícone de cada opção já mostra qual é; sem o "visto" cabe em telas estreitas.
+                  // O ícone de cada opção já mostra qual é; sem o "visto" e com menos
+                  // margem, o texto cabe numa linha só mesmo em telas estreitas.
                   showSelectedIcon: false,
+                  style: SegmentedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                  ),
                   selected: {settings.themeMode},
                   onSelectionChanged: (values) => settings.setThemeMode(values.first),
                 ),

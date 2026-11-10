@@ -99,7 +99,7 @@ class _BinsMap extends StatelessWidget {
               CityLayers.districtFills(
                 boundaries,
                 colorFor: (id) => districts[id]?.level.color(context),
-                alpha: 0.3,
+                alpha: 0.45,
                 borderWidth: 1,
               ),
               ...CityLayers.outline(boundaries),
