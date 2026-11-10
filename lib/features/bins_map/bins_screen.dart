@@ -7,6 +7,7 @@ import 'package:recicla_radar_sp/core/map/boundaries_status.dart';
 import 'package:recicla_radar_sp/core/map/city_layers.dart';
 import 'package:recicla_radar_sp/core/map/map_controller_grabber.dart';
 import 'package:recicla_radar_sp/core/map/sp_map.dart';
+import 'package:recicla_radar_sp/core/responsive/responsive.dart';
 import 'package:recicla_radar_sp/core/router/app_routes.dart';
 import 'package:recicla_radar_sp/core/theme/app_spacing.dart';
 import 'package:recicla_radar_sp/core/widgets/map_attribution.dart';
@@ -56,7 +57,8 @@ class _BinsScreenState extends State<BinsScreen> {
     super.didUpdateWidget(oldWidget);
     // Chegou um novo pedido de outra tela (ex.: "ver no mapa").
     if (oldWidget.showList != widget.showList) _showMap = !widget.showList;
-    if (widget.focusBinId != null && widget.focusBinId != oldWidget.focusBinId) {
+    if (widget.focusBinId != null &&
+        widget.focusBinId != oldWidget.focusBinId) {
       _showMap = true;
     }
   }
@@ -78,67 +80,74 @@ class _BinsScreenState extends State<BinsScreen> {
       ),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.md,
-              AppSpacing.md,
-              AppSpacing.md,
-              AppSpacing.sm,
-            ),
-            child: SegmentedButton<bool>(
-              segments: const [
-                ButtonSegment(
-                  value: true,
-                  icon: Icon(Icons.map_outlined),
-                  label: Text('Mapa'),
-                ),
-                ButtonSegment(
-                  value: false,
-                  icon: Icon(Icons.list),
-                  label: Text('Lista'),
-                ),
-              ],
-              selected: {_showMap},
-              onSelectionChanged: (values) =>
-                  setState(() => _showMap = values.first),
-            ),
-          ),
-          if (filteredDistrict != null)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.md,
-                0,
-                AppSpacing.md,
-                AppSpacing.sm,
-              ),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: InputChip(
-                  avatar: const Icon(Icons.filter_alt_outlined, size: 18),
-                  label: Text('Distrito: ${filteredDistrict.name}'),
-                  deleteButtonTooltipMessage: 'Tirar o filtro de distrito',
-                  onDeleted: () => context.goNamed(
-                    AppRoutes.bins,
-                    queryParameters: {
-                      if (!_showMap) AppRoutes.modeParam: 'lista',
-                    },
+          ContentWidth(
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.md,
+                    AppSpacing.md,
+                    AppSpacing.md,
+                    AppSpacing.sm,
+                  ),
+                  child: SegmentedButton<bool>(
+                    segments: const [
+                      ButtonSegment(
+                        value: true,
+                        icon: Icon(Icons.map_outlined),
+                        label: Text('Mapa'),
+                      ),
+                      ButtonSegment(
+                        value: false,
+                        icon: Icon(Icons.list),
+                        label: Text('Lista'),
+                      ),
+                    ],
+                    selected: {_showMap},
+                    onSelectionChanged: (values) =>
+                        setState(() => _showMap = values.first),
                   ),
                 ),
-              ),
+                if (filteredDistrict != null)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.md,
+                      0,
+                      AppSpacing.md,
+                      AppSpacing.sm,
+                    ),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: InputChip(
+                        avatar: const Icon(Icons.filter_alt_outlined, size: 18),
+                        label: Text('Distrito: ${filteredDistrict.name}'),
+                        deleteButtonTooltipMessage:
+                            'Tirar o filtro de distrito',
+                        onDeleted: () => context.goNamed(
+                          AppRoutes.bins,
+                          queryParameters: {
+                            if (!_showMap) AppRoutes.modeParam: 'lista',
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                if (!_showMap)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.md,
+                      0,
+                      AppSpacing.md,
+                      AppSpacing.sm,
+                    ),
+                    child: _StatusFilter(
+                      selected: _status,
+                      onChanged: (status) => setState(() => _status = status),
+                    ),
+                  ),
+              ],
             ),
-          if (!_showMap)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.md,
-                0,
-                AppSpacing.md,
-                AppSpacing.sm,
-              ),
-              child: _StatusFilter(
-                selected: _status,
-                onChanged: (status) => setState(() => _status = status),
-              ),
-            ),
+          ),
           Expanded(
             child: LoadableView<List<Bin>>(
               notifier: bins,
@@ -170,7 +179,7 @@ class _BinsScreenState extends State<BinsScreen> {
                     icon: Icons.filter_alt_off_outlined,
                   );
                 }
-                return _BinsList(bins: visible);
+                return ContentWidth(child: _BinsList(bins: visible));
               },
             ),
           ),

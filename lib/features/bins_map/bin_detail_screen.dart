@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import 'package:recicla_radar_sp/core/responsive/responsive.dart';
 import 'package:recicla_radar_sp/core/router/app_navigation.dart';
 import 'package:recicla_radar_sp/core/router/app_routes.dart';
 import 'package:recicla_radar_sp/core/theme/status_colors.dart';
@@ -70,7 +71,7 @@ class _BinDetailScreenState extends State<BinDetailScreen> {
     final theme = Theme.of(context);
     final statusColor = bin.status.color(context);
 
-    return ListView(
+    return ContentListView(
       padding: const EdgeInsets.all(AppSpacing.md),
       children: [
         AppCard(

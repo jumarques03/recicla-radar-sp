@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'package:recicla_radar_sp/core/responsive/responsive.dart';
 import 'package:recicla_radar_sp/core/theme/app_spacing.dart';
 import 'package:recicla_radar_sp/core/widgets/app_card.dart';
 import 'package:recicla_radar_sp/state/session_provider.dart';
@@ -39,7 +40,8 @@ class SettingsScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Configurações')),
-      body: ListView(
+      body: ContentListView(
+        maxWidth: Breakpoints.formMax,
         padding: const EdgeInsets.all(AppSpacing.md),
         children: [
           if (user != null) ...[

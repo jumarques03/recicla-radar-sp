@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import 'package:recicla_radar_sp/core/responsive/responsive.dart';
 import 'package:recicla_radar_sp/core/router/app_routes.dart';
 import 'package:recicla_radar_sp/core/theme/app_spacing.dart';
 import 'package:recicla_radar_sp/core/widgets/settings_action.dart';
@@ -64,55 +65,90 @@ class _AlertsScreenState extends State<AlertsScreen> {
           const SettingsAction(),
         ],
       ),
-      body: Column(
-        children: [
-          const HumanDecisionBanner(),
-          if (widget.districtId != null || widget.binId != null)
-            _LinkedFilterChip(districtId: widget.districtId, binId: widget.binId),
-          AlertFilterPanel(
-            filters: _filters,
-            onChanged: (filters) => setState(() => _filters = filters),
-          ),
-          Expanded(
-            child: LoadableView<List<Alert>>(
-              notifier: alerts,
-              isEmpty: (list) => list.isEmpty,
-              emptyTitle: 'Nenhum alerta por enquanto',
-              emptyMessage: 'Quando o sistema perceber algo, o aviso aparece aqui.',
-              builder: (context, list) {
-                final visible = list
-                    .where((a) =>
-                        (widget.districtId == null || a.districtId == widget.districtId) &&
-                        (widget.binId == null || a.binId == widget.binId) &&
-                        _filters.matches(a, isSeen: alerts.isSeen))
-                    .toList();
-                if (visible.isEmpty) {
-                  return EmptyView(
+      body: LoadableView<List<Alert>>(
+        notifier: alerts,
+        isEmpty: (list) => list.isEmpty,
+        emptyTitle: 'Nenhum alerta por enquanto',
+        emptyMessage: 'Quando o sistema perceber algo, o aviso aparece aqui.',
+        builder: (context, list) {
+          final visible = list
+              .where((a) =>
+                  (widget.districtId == null || a.districtId == widget.districtId) &&
+                  (widget.binId == null || a.binId == widget.binId) &&
+                  _filters.matches(a, isSeen: alerts.isSeen))
+              .toList();
+
+          // A faixa de aviso e os filtros ficam fixos no topo. Com letra muito
+          // grande eles ocupariam quase metade da tela, então rolam junto com a lista.
+          final headers = <Widget>[
+            const HumanDecisionBanner(),
+            ContentWidth(
+              child: Column(
+                children: [
+                  if (widget.districtId != null || widget.binId != null)
+                    _LinkedFilterChip(districtId: widget.districtId, binId: widget.binId),
+                  AlertFilterPanel(
+                    filters: _filters,
+                    onChanged: (filters) => setState(() => _filters = filters),
+                  ),
+                ],
+              ),
+            ),
+          ];
+          final scrollHeaders = context.isLargeText;
+
+          final cards = visible.isEmpty
+              ? const [
+                  EmptyView(
                     title: 'Nenhum alerta com esses filtros',
                     message: 'Mude ou limpe os filtros para ver mais alertas.',
                     icon: Icons.filter_alt_off_outlined,
-                  );
-                }
-                return RefreshIndicator(
-                  onRefresh: alerts.load,
-                  child: ListView.separated(
-                    padding: const EdgeInsets.all(AppSpacing.md),
-                    itemCount: visible.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.sm + 4),
-                    itemBuilder: (context, index) => AlertCard(
-                      alert: visible[index],
-                      isNew: visible[index].status.isActive && !alerts.isSeen(visible[index].id),
-                      onTap: () => context.pushNamed(
-                        AppRoutes.alert,
-                        pathParameters: {'id': visible[index].id},
+                  ),
+                ]
+              : [
+                  for (final alert in visible)
+                    ContentWidth(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.md,
+                          0,
+                          AppSpacing.md,
+                          AppSpacing.sm + 4,
+                        ),
+                        child: AlertCard(
+                          alert: alert,
+                          isNew: alert.status.isActive && !alerts.isSeen(alert.id),
+                          onTap: () => context.pushNamed(
+                            AppRoutes.alert,
+                            pathParameters: {'id': alert.id},
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                );
-              },
+                ];
+
+          final headerCount = scrollHeaders ? headers.length : 0;
+          final listView = RefreshIndicator(
+            onRefresh: alerts.load,
+            child: ListView.builder(
+              padding: EdgeInsets.only(
+                top: scrollHeaders ? 0 : AppSpacing.md,
+                bottom: AppSpacing.md,
+              ),
+              itemCount: headerCount + cards.length,
+              itemBuilder: (context, index) =>
+                  index < headerCount ? headers[index] : cards[index - headerCount],
             ),
-          ),
-        ],
+          );
+
+          if (scrollHeaders) return listView;
+          return Column(
+            children: [
+              ...headers,
+              Expanded(child: listView),
+            ],
+          );
+        },
       ),
     );
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import 'package:recicla_radar_sp/core/responsive/responsive.dart';
 import 'package:recicla_radar_sp/core/router/app_routes.dart';
 import 'package:recicla_radar_sp/core/theme/app_spacing.dart';
 import 'package:recicla_radar_sp/core/utils/formatters.dart';
@@ -176,7 +177,8 @@ class _InspectionScreenState extends State<InspectionScreen> {
           : SafeArea(
               child: Form(
                 key: _formKey,
-                child: ListView(
+                child: ContentListView(
+                  maxWidth: Breakpoints.formMax,
                   padding: const EdgeInsets.all(AppSpacing.md),
                   children: [
                     _ConsentNote(consent: consent, authorName: authorName),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'package:recicla_radar_sp/core/responsive/responsive.dart';
 import 'package:recicla_radar_sp/core/router/app_navigation.dart';
 import 'package:recicla_radar_sp/core/theme/app_spacing.dart';
 import 'package:recicla_radar_sp/core/utils/formatters.dart';
@@ -76,7 +77,8 @@ class _AlertDetailScreenState extends State<AlertDetailScreen> {
 
   Widget _content(BuildContext context, Alert alert) {
     final theme = Theme.of(context);
-    return ListView(
+    return ContentListView(
+      padding: EdgeInsets.zero,
       children: [
         const HumanDecisionBanner(),
         Padding(

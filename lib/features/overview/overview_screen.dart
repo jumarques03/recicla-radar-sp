@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'package:recicla_radar_sp/core/responsive/responsive.dart';
 import 'package:recicla_radar_sp/core/theme/app_spacing.dart';
 import 'package:recicla_radar_sp/core/utils/formatters.dart';
 import 'package:recicla_radar_sp/core/widgets/charts/chart_card.dart';
@@ -37,7 +38,8 @@ class OverviewScreen extends StatelessWidget {
       ),
       body: RefreshIndicator(
         onRefresh: overview.load,
-        child: ListView(
+        child: ContentListView(
+          maxWidth: Breakpoints.dashboardMax,
           padding: const EdgeInsets.all(AppSpacing.md),
           children: [
             if (name != null)
@@ -63,6 +65,7 @@ class OverviewScreen extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.md),
             const CriticalAlertsCard(),
+            const SizedBox(height: AppSpacing.md),
             // Carregando, erro e vazio precisam de altura própria dentro da lista.
             SizedBox(
               height: showsContent ? null : 320,
@@ -111,18 +114,38 @@ class _SummaryContent extends StatelessWidget {
           ),
         ),
         const SectionTitle('Por tipo de material'),
-        ChartCard(
-          title: 'Quilos por material',
-          summary: describeMaterials(materials),
-          chart: MaterialBarChart(kgByMaterial: materials),
-          legend: MaterialLegend(kgByMaterial: materials),
-        ),
-        const SizedBox(height: AppSpacing.md),
-        ChartCard(
-          title: 'Participação de cada material',
-          summary: 'Cada fatia mostra quanto do total cada material representa.',
-          height: 200,
-          chart: MaterialPieChart(kgByMaterial: materials),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final barCard = ChartCard(
+              title: 'Quilos por material',
+              summary: describeMaterials(materials),
+              chart: MaterialBarChart(kgByMaterial: materials),
+              legend: MaterialLegend(kgByMaterial: materials),
+            );
+            final pieCard = ChartCard(
+              title: 'Participação de cada material',
+              summary: 'Cada fatia mostra quanto do total cada material representa.',
+              height: 200,
+              chart: MaterialPieChart(kgByMaterial: materials),
+            );
+            // Em tela larga, os dois gráficos ficam lado a lado, com a mesma altura.
+            if (constraints.maxWidth >= 760) {
+              return IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(child: barCard),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(child: pieCard),
+                  ],
+                ),
+              );
+            }
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [barCard, const SizedBox(height: AppSpacing.md), pieCard],
+            );
+          },
         ),
         const SectionTitle('Benefício social'),
         SocialBenefitCard(summary: summary),

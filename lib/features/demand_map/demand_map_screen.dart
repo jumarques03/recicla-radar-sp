@@ -6,6 +6,7 @@ import 'package:recicla_radar_sp/core/map/boundaries_status.dart';
 import 'package:recicla_radar_sp/core/map/city_layers.dart';
 import 'package:recicla_radar_sp/core/map/map_controller_grabber.dart';
 import 'package:recicla_radar_sp/core/map/sp_map.dart';
+import 'package:recicla_radar_sp/core/responsive/responsive.dart';
 import 'package:recicla_radar_sp/core/theme/app_spacing.dart';
 import 'package:recicla_radar_sp/core/widgets/map_attribution.dart';
 import 'package:recicla_radar_sp/core/widgets/settings_action.dart';
@@ -113,24 +114,30 @@ class _DemandMapScreenState extends State<DemandMapScreen> {
       ),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            child: SegmentedButton<bool>(
-              segments: const [
-                ButtonSegment(
-                  value: true,
-                  icon: Icon(Icons.map_outlined),
-                  label: Text('Mapa'),
-                ),
-                ButtonSegment(
-                  value: false,
-                  icon: Icon(Icons.list),
-                  label: Text('Lista'),
+          ContentWidth(
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  child: SegmentedButton<bool>(
+                    segments: const [
+                      ButtonSegment(
+                        value: true,
+                        icon: Icon(Icons.map_outlined),
+                        label: Text('Mapa'),
+                      ),
+                      ButtonSegment(
+                        value: false,
+                        icon: Icon(Icons.list),
+                        label: Text('Lista'),
+                      ),
+                    ],
+                    selected: {_showMap},
+                    onSelectionChanged: (values) =>
+                        setState(() => _showMap = values.first),
+                  ),
                 ),
               ],
-              selected: {_showMap},
-              onSelectionChanged: (values) =>
-                  setState(() => _showMap = values.first),
             ),
           ),
           Expanded(
@@ -148,10 +155,12 @@ class _DemandMapScreenState extends State<DemandMapScreen> {
                         focusDistrictId: widget.districtId,
                         onOpen: _openDistrict,
                       )
-                    : DemandDistrictList(
-                        districts: list,
-                        rankOf: districts.rankOf,
-                        onTap: _openDistrict,
+                    : ContentWidth(
+                        child: DemandDistrictList(
+                          districts: list,
+                          rankOf: districts.rankOf,
+                          onTap: _openDistrict,
+                        ),
                       );
               },
             ),

@@ -41,6 +41,8 @@ class DistrictSheet extends StatelessWidget {
       isScrollControlled: true,
       // Por cima do app todo; senão a barra de navegação esconde a parte de baixo do painel.
       useRootNavigator: true,
+      // Em tela larga o painel não estica de ponta a ponta.
+      constraints: const BoxConstraints(maxWidth: 640),
       builder: (sheetContext) => DistrictSheet(
         district: district,
         rank: provider.rankOf(district),
