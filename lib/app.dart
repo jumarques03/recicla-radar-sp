@@ -17,8 +17,8 @@ import 'package:recicla_radar_sp/data/osm/osm_boundary_repository.dart';
 import 'package:recicla_radar_sp/data/repositories/auth_repository.dart';
 import 'package:recicla_radar_sp/data/repositories/data_repositories.dart';
 import 'package:recicla_radar_sp/data/repositories/engine_alert_repository.dart';
+import 'package:recicla_radar_sp/data/repositories/local_auth_repository.dart';
 import 'package:recicla_radar_sp/data/repositories/local_inspection_repository.dart';
-import 'package:recicla_radar_sp/data/repositories/mock_auth_repository.dart';
 import 'package:recicla_radar_sp/data/repositories/mock_repositories.dart';
 import 'package:recicla_radar_sp/state/alerts_provider.dart';
 import 'package:recicla_radar_sp/state/bins_provider.dart';
@@ -78,7 +78,7 @@ class ReciclaRadarApp extends StatelessWidget {
         ),
         ChangeNotifierProvider(create: (_) => SettingsProvider(prefs)),
         ChangeNotifierProvider(
-          create: (_) => SessionProvider(authRepository ?? MockAuthRepository()),
+          create: (_) => SessionProvider(authRepository ?? LocalAuthRepository(prefs)),
         ),
         ChangeNotifierProvider(create: (_) => FiltersProvider()),
         ChangeNotifierProvider(create: (_) => BinsProvider(bins)..load()),

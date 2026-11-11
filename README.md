@@ -112,7 +112,7 @@ Alerta, lixeira e distrito se levam uns aos outros (por exemplo, do alerta para 
 
 - **Consentimento:** o cadastro pede o aceite, e as Configurações permitem mudar a escolha. Com o consentimento ligado, a vistoria leva o nome de quem registrou; desligado, é registrada de forma **anônima**. O formulário avisa qual dos dois vale.
 - **Dados pessoais mínimos:** só o nome, e só com consentimento. Tudo fica no aparelho (`shared_preferences`); não há servidor.
-- **Login simulado:** serve para demonstrar o fluxo e não oferece segurança real.
+- **Contas no aparelho:** o cadastro cria a conta no próprio aparelho, e ela continua existindo depois de fechar o app. A senha não é guardada em texto, só um resumo (SHA-256 com sal). Como não há servidor, o login serve para demonstrar o fluxo e não oferece segurança real.
 - **Acessibilidade:** contraste WCAG AA nos temas claro e escuro e AAA (7:1) no de alto contraste, verificados por teste; tamanho de letra ajustável e respeito à fonte do sistema; alvos de toque de pelo menos 48 dp; gravidade e status sempre com ícone e texto, nunca só cor; descrições para leitores de tela em botões, gráficos e marcadores; animações desligadas quando o aparelho pede menos movimento.
 
 ## Tecnologias e decisões técnicas
