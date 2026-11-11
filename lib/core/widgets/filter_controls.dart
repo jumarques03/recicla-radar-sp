@@ -34,22 +34,35 @@ class MaterialFilter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: AppSpacing.sm,
-      runSpacing: AppSpacing.sm,
-      children: [
-        ChoiceChip(
-          label: const Text('Todos'),
-          selected: selected == null,
-          onSelected: (_) => onChanged(null),
-        ),
-        for (final material in WasteMaterial.values)
-          ChoiceChip(
-            label: Text(material.label),
-            selected: selected == material,
-            onSelected: (_) => onChanged(material),
+    // Chips do mesmo tamanho, em grade: 3 por linha no celular e todos numa linha
+    // quando há espaço. Assim nada fica cortado nem desalinhado.
+    const gap = AppSpacing.sm;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth >= 520 ? 5 : 3;
+        final width = (constraints.maxWidth - gap * (columns - 1)) / columns;
+
+        Widget chip(String label, bool isSelected, VoidCallback onTap) => SizedBox(
+          width: width,
+          child: ChoiceChip(
+            label: SizedBox(width: double.infinity, child: Text(label, textAlign: TextAlign.center)),
+            selected: isSelected,
+            onSelected: (_) => onTap(),
+            visualDensity: VisualDensity.compact,
+            labelPadding: const EdgeInsets.symmetric(horizontal: 2),
           ),
-      ],
+        );
+
+        return Wrap(
+          spacing: gap,
+          runSpacing: gap,
+          children: [
+            chip('Todos', selected == null, () => onChanged(null)),
+            for (final material in WasteMaterial.values)
+              chip(material.label, selected == material, () => onChanged(material)),
+          ],
+        );
+      },
     );
   }
 }

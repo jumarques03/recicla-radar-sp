@@ -91,15 +91,19 @@ class _BinDetailScreenState extends State<BinDetailScreen> {
                 value: '${Formatters.timeAgo(bin.lastCollection)} '
                     '(${Formatters.dateTime(bin.lastCollection)})',
               ),
-              _InfoRow(
-                icon: Icons.scale_outlined,
-                label: 'Total coletado em 30 dias',
-                value: Formatters.kg(bin.totalKg),
-              ),
             ],
           ),
         ),
         const SizedBox(height: AppSpacing.md),
+        FilledButton.icon(
+          icon: const Icon(Icons.edit_note),
+          label: const Text('Registrar vistoria'),
+          onPressed: () => context.pushNamed(
+            AppRoutes.inspection,
+            queryParameters: {'binId': bin.id},
+          ),
+        ),
+        const SizedBox(height: AppSpacing.sm + 4),
         Wrap(
           spacing: AppSpacing.sm,
           runSpacing: AppSpacing.sm,
@@ -118,69 +122,117 @@ class _BinDetailScreenState extends State<BinDetailScreen> {
         ),
         const SectionTitle('Alertas desta lixeira'),
         _BinAlerts(binId: bin.id),
-        const SectionTitle('Material coletado'),
-        ChartCard(
-          title: 'Quilos por material (30 dias)',
-          summary: describeMaterials(bin.kgByMaterial),
-          chart: MaterialBarChart(kgByMaterial: bin.kgByMaterial),
-          legend: MaterialLegend(kgByMaterial: bin.kgByMaterial),
-        ),
-        const SectionTitle('Últimos 7 dias'),
-        FutureBuilder<List<Reading>>(
-          future: _readings,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState != ConnectionState.done) {
-              return const SizedBox(height: 200, child: LoadingView());
-            }
-            if (snapshot.hasError) {
-              return SizedBox(
-                height: 260,
-                child: ErrorView(
-                  message: 'Não foi possível carregar o histórico. Tente de novo.',
-                  onRetry: () => setState(_loadReadings),
-                ),
-              );
-            }
-            final readings = snapshot.data!.reversed.toList();
-            if (readings.isEmpty) {
-              return const SizedBox(
-                height: 200,
-                child: EmptyView(
-                  title: 'Sem histórico',
-                  message: 'Esta lixeira ainda não enviou leituras.',
-                ),
-              );
-            }
-            final values = [for (final r in readings) r.fillPercent.toDouble()];
-            return ChartCard(
-              title: 'Quanto a lixeira encheu por dia (%)',
-              summary: 'Hoje a lixeira está com ${values.last.round()}%. '
-                  'Há 7 dias estava com ${values.first.round()}%. '
-                  'Quedas no gráfico indicam que houve coleta.',
-              height: 180,
-              chart: SimpleLineChart(
-                labels: [for (final r in readings) Formatters.shortDate(r.date)],
-                values: values,
-                maxY: 100,
-                formatY: (v) => '${v.round()}%',
-                formatTooltip: (v) => '${v.round()}%',
-              ),
-            );
-          },
-        ),
-        const SectionTitle('Vistorias registradas'),
-        _BinInspections(binId: bin.id),
+        // O resto fica recolhido: abre só o que a pessoa quer ver.
         const SizedBox(height: AppSpacing.lg),
-        FilledButton.icon(
-          icon: const Icon(Icons.edit_note),
-          label: const Text('Registrar vistoria'),
-          onPressed: () => context.pushNamed(
-            AppRoutes.inspection,
-            queryParameters: {'binId': bin.id},
+        _Section(
+          title: 'Material coletado',
+          subtitle: '${Formatters.kg(bin.totalKg)} em 30 dias',
+          child: ChartCard(
+            bare: true,
+            title: 'Quilos por material (30 dias)',
+            summary: describeMaterials(bin.kgByMaterial),
+            chart: MaterialBarChart(kgByMaterial: bin.kgByMaterial),
+            legend: MaterialLegend(kgByMaterial: bin.kgByMaterial),
           ),
         ),
+        _Section(
+          title: 'Enchimento nos últimos 7 dias',
+          child: FutureBuilder<List<Reading>>(
+            future: _readings,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState != ConnectionState.done) {
+                return const SizedBox(height: 200, child: LoadingView());
+              }
+              if (snapshot.hasError) {
+                return SizedBox(
+                  height: 260,
+                  child: ErrorView(
+                    message: 'Não foi possível carregar o histórico. Tente de novo.',
+                    onRetry: () => setState(_loadReadings),
+                  ),
+                );
+              }
+              final readings = snapshot.data!.reversed.toList();
+              if (readings.isEmpty) {
+                return const SizedBox(
+                  height: 200,
+                  child: EmptyView(
+                    title: 'Sem histórico',
+                    message: 'Esta lixeira ainda não enviou leituras.',
+                  ),
+                );
+              }
+              final values = [for (final r in readings) r.fillPercent.toDouble()];
+              return ChartCard(
+                bare: true,
+                title: 'Quanto a lixeira encheu por dia (%)',
+                summary: 'Hoje a lixeira está com ${values.last.round()}%. '
+                    'Há 7 dias estava com ${values.first.round()}%. '
+                    'Quedas no gráfico indicam que houve coleta.',
+                height: 180,
+                chart: SimpleLineChart(
+                  labels: [for (final r in readings) Formatters.shortDate(r.date)],
+                  values: values,
+                  maxY: 100,
+                  formatY: (v) => '${v.round()}%',
+                  formatTooltip: (v) => '${v.round()}%',
+                ),
+              );
+            },
+          ),
+        ),
+        _BinInspectionsSection(binId: bin.id),
         const SizedBox(height: AppSpacing.lg),
       ],
+    );
+  }
+}
+
+/// Bloco que começa fechado e abre ao tocar no título.
+class _Section extends StatelessWidget {
+  const _Section({required this.title, required this.child, this.subtitle});
+
+  final String title;
+  final String? subtitle;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: ExpansionTile(
+        // Sem as linhas finas que o ExpansionTile desenha por padrão.
+        shape: const Border(),
+        collapsedShape: const Border(),
+        tilePadding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+        childrenPadding: const EdgeInsets.fromLTRB(AppSpacing.md, 0, AppSpacing.md, AppSpacing.md),
+        expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
+        title: Text(title, style: theme.textTheme.titleMedium),
+        subtitle: subtitle == null ? null : Text(subtitle!),
+        children: [child],
+      ),
+    );
+  }
+}
+
+/// Vistorias da lixeira, num bloco recolhido que já diz quantas existem.
+class _BinInspectionsSection extends StatelessWidget {
+  const _BinInspectionsSection({required this.binId});
+
+  final String binId;
+
+  @override
+  Widget build(BuildContext context) {
+    final count = context.watch<InspectionsProvider>().forBin(binId).length;
+    return _Section(
+      title: 'Vistorias registradas',
+      subtitle: switch (count) {
+        0 => 'Nenhuma ainda',
+        1 => '1 vistoria',
+        _ => '$count vistorias',
+      },
+      child: _BinInspections(binId: binId),
     );
   }
 }
@@ -191,7 +243,7 @@ class _BinAlerts extends StatelessWidget {
 
   final String binId;
 
-  static const int _maxShown = 3;
+  static const int _maxShown = 2;
 
   @override
   Widget build(BuildContext context) {

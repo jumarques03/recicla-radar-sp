@@ -68,10 +68,10 @@ class AlertEngine {
       ..._coverageAlerts(input),
       ..._inspectionAlerts(input),
     ];
-    // Mais graves primeiro; em empate, o mais recente.
+    // Mais graves primeiro; em empate, o que está aberto há mais tempo.
     alerts.sort((a, b) {
       final bySeverity = b.severity.index.compareTo(a.severity.index);
-      return bySeverity != 0 ? bySeverity : b.createdAt.compareTo(a.createdAt);
+      return bySeverity != 0 ? bySeverity : a.createdAt.compareTo(b.createdAt);
     });
     return alerts;
   }

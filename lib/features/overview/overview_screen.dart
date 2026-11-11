@@ -51,11 +51,15 @@ class OverviewScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  Text('Período', style: Theme.of(context).textTheme.titleSmall),
+                  const SizedBox(height: AppSpacing.xs + 2),
                   PeriodSelector(
                     selected: filters.periodDays,
                     onChanged: filters.setPeriod,
                   ),
                   const SizedBox(height: AppSpacing.md),
+                  Text('Material', style: Theme.of(context).textTheme.titleSmall),
+                  const SizedBox(height: AppSpacing.xs + 2),
                   MaterialFilter(
                     selected: filters.material,
                     onChanged: filters.setMaterial,

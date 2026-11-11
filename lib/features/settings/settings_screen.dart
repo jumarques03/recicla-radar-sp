@@ -53,32 +53,32 @@ class SettingsScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SegmentedButton<ThemeMode>(
-                  segments: const [
-                    ButtonSegment(
-                      value: ThemeMode.system,
-                      icon: Icon(Icons.brightness_auto),
-                      label: Text('Sistema'),
-                    ),
-                    ButtonSegment(
-                      value: ThemeMode.light,
-                      icon: Icon(Icons.light_mode_outlined),
-                      label: Text('Claro'),
-                    ),
-                    ButtonSegment(
-                      value: ThemeMode.dark,
-                      icon: Icon(Icons.dark_mode_outlined),
-                      label: Text('Escuro'),
-                    ),
-                  ],
-                  // O ícone de cada opção já mostra qual é; sem o "visto" e com menos
-                  // margem, o texto cabe numa linha só mesmo em telas estreitas.
-                  showSelectedIcon: false,
-                  style: SegmentedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 6),
-                  ),
-                  selected: {settings.themeMode},
-                  onSelectionChanged: (values) => settings.setThemeMode(values.first),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    // Em telas muito estreitas os ícones tiram o espaço do texto: ficam só os nomes.
+                    final showIcons = constraints.maxWidth >= 270;
+                    ButtonSegment<ThemeMode> segment(ThemeMode mode, IconData icon, String label) =>
+                        ButtonSegment(
+                          value: mode,
+                          icon: showIcons ? Icon(icon) : null,
+                          label: FittedBox(fit: BoxFit.scaleDown, child: Text(label)),
+                        );
+
+                    return SegmentedButton<ThemeMode>(
+                      segments: [
+                        segment(ThemeMode.system, Icons.brightness_auto, 'Sistema'),
+                        segment(ThemeMode.light, Icons.light_mode_outlined, 'Claro'),
+                        segment(ThemeMode.dark, Icons.dark_mode_outlined, 'Escuro'),
+                      ],
+                      // Sem o "visto" e com menos margem, o texto cabe numa linha só.
+                      showSelectedIcon: false,
+                      style: SegmentedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                      ),
+                      selected: {settings.themeMode},
+                      onSelectionChanged: (values) => settings.setThemeMode(values.first),
+                    );
+                  },
                 ),
                 const SizedBox(height: AppSpacing.md),
                 SwitchListTile(

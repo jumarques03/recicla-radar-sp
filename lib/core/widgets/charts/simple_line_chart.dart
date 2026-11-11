@@ -10,6 +10,7 @@ class SimpleLineChart extends StatelessWidget {
     required this.labels,
     required this.values,
     this.maxY,
+    this.autoScale = false,
     this.formatY,
     this.formatTooltip,
   });
@@ -17,6 +18,11 @@ class SimpleLineChart extends StatelessWidget {
   final List<String> labels;
   final List<double> values;
   final double? maxY;
+
+  /// Ajusta a escala vertical aos valores (em vez de começar do zero), para a variação
+  /// aparecer. Os três números do eixo ficam em múltiplos de 10.
+  final bool autoScale;
+
   final String Function(double value)? formatY;
 
   /// Texto do valor ao tocar num ponto. Sem isso, usa duas casas decimais.
@@ -31,13 +37,54 @@ class SimpleLineChart extends StatelessWidget {
     String format(double v) => formatY?.call(v) ?? v.round().toString();
     String tooltip(double v) => formatTooltip?.call(v) ?? Formatters.decimal(v);
 
+    // Escala: do zero ao máximo, ou só a faixa dos valores quando [autoScale].
+    var minAxis = 0.0;
+    var maxAxis = maxY;
+    if (autoScale && values.isNotEmpty) {
+      final low = values.reduce((a, b) => a < b ? a : b);
+      final high = values.reduce((a, b) => a > b ? a : b);
+      minAxis = (((low - 4) / 10).floor() * 10.0).clamp(0, 1000);
+      var top = (((high + 4) / 10).ceil() * 10.0);
+      if (maxY != null && top > maxY!) top = maxY!;
+      // A altura do eixo vira múltiplo de 20, para o rótulo do meio cair num número redondo.
+      var span = top - minAxis;
+      if (span < 20) span = 20;
+      span = (span / 20).ceil() * 20.0;
+      maxAxis = minAxis + span;
+      if (maxY != null && maxAxis > maxY!) {
+        maxAxis = maxY!;
+        minAxis = (maxAxis - span).clamp(0, maxAxis);
+      }
+    }
+    final leftInterval = autoScale && maxAxis != null
+        ? (maxAxis - minAxis) / 2
+        : null;
+
+    final spots = [
+      for (var i = 0; i < values.length; i++) FlSpot(i.toDouble(), values[i]),
+    ];
+    final bar = LineChartBarData(
+      spots: spots,
+      isCurved: true,
+      preventCurveOverShooting: true,
+      color: color,
+      barWidth: 4,
+      dotData: const FlDotData(),
+      belowBarData: BarAreaData(
+        show: true,
+        color: color.withValues(alpha: 0.12),
+      ),
+    );
+
     return LineChart(
       LineChartData(
-        minY: 0,
-        maxY: maxY,
+        minY: minAxis,
+        maxY: maxAxis,
+
         borderData: FlBorderData(show: false),
         gridData: FlGridData(
           drawVerticalLine: false,
+          horizontalInterval: leftInterval,
           getDrawingHorizontalLine: (_) =>
               FlLine(color: theme.colorScheme.outlineVariant, strokeWidth: 1),
         ),
@@ -47,9 +94,11 @@ class SimpleLineChart extends StatelessWidget {
           leftTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              reservedSize: 60,
+              reservedSize: autoScale ? 40 : 60,
+              interval: leftInterval,
               getTitlesWidget: (value, meta) {
-                if (value == meta.max || value == meta.min && value != 0) {
+                if (!autoScale &&
+                    (value == meta.max || value == meta.min && value != 0)) {
                   return const SizedBox.shrink();
                 }
                 return Text(format(value), style: labelStyle, softWrap: false);
@@ -63,7 +112,9 @@ class SimpleLineChart extends StatelessWidget {
               interval: 1,
               getTitlesWidget: (value, meta) {
                 final index = value.toInt();
-                if (index < 0 || index >= labels.length || index % labelEvery != 0) {
+                if (index < 0 ||
+                    index >= labels.length ||
+                    index % labelEvery != 0) {
                   return const SizedBox.shrink();
                 }
                 return Padding(
@@ -74,19 +125,11 @@ class SimpleLineChart extends StatelessWidget {
             ),
           ),
         ),
-        lineBarsData: [
-          LineChartBarData(
-            spots: [for (var i = 0; i < values.length; i++) FlSpot(i.toDouble(), values[i])],
-            isCurved: true,
-            preventCurveOverShooting: true,
-            color: color,
-            barWidth: 4,
-            dotData: const FlDotData(),
-            belowBarData: BarAreaData(show: true, color: color.withValues(alpha: 0.12)),
-          ),
-        ],
+        lineBarsData: [bar],
         lineTouchData: LineTouchData(
           touchTooltipData: LineTouchTooltipData(
+            fitInsideHorizontally: true,
+            fitInsideVertically: true,
             getTooltipItems: (spots) => [
               for (final spot in spots)
                 LineTooltipItem(

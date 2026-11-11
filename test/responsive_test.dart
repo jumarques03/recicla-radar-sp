@@ -135,10 +135,13 @@ void main() {
       await scrollThrough(tester);
       noErrors(tester, 'detalhe da lixeira, ao rolar');
 
+      // O botão fica no alto do detalhe da lixeira: volta ao topo depois de rolar.
+      await tester.drag(find.byType(ListView).hitTestable().first, const Offset(0, 4000));
+      await tester.pumpAndSettle();
       await tester.scrollUntilVisible(
         find.text('Registrar vistoria'),
-        300,
-        scrollable: find.descendant(of: find.byType(ListView).last, matching: find.byType(Scrollable)).first,
+        200,
+        scrollable: find.descendant(of: find.byType(ListView).hitTestable().first, matching: find.byType(Scrollable)).first,
       );
       Scrollable.ensureVisible(tester.element(find.text('Registrar vistoria')), alignment: 0.5);
       await tester.pumpAndSettle();

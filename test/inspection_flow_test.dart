@@ -245,6 +245,39 @@ void main() {
       expect((await LocalInspectionRepository(prefs).fetchAll()).single.authorName, 'Ana Souza');
     });
 
+    testWidgets('o botão "coletar lixo da lixeira" escreve a frase pronta e marca que precisa de coleta', (tester) async {
+      final prefs = await openInspectionForm(tester);
+
+      await tester.tap(find.text('Preencher: coletar lixo da lixeira'));
+      await tester.pumpAndSettle();
+      expect(find.text('Coletar lixo da lixeira.'), findsOneWidget);
+      expect(find.text('Lixeira cheia'), findsOneWidget); // tipo escolhido sozinho
+      expect(find.text('Sim, precisa.'), findsOneWidget);
+
+      await tester.tap(find.text('Data e hora'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Escolher'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Escolher'));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text('Salvar vistoria'),
+        300,
+        scrollable: find.descendant(of: find.byType(ListView).last, matching: find.byType(Scrollable)).first,
+      );
+      await tester.ensureVisible(find.text('Salvar vistoria'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Salvar vistoria'));
+      await tester.pumpAndSettle(const Duration(seconds: 2));
+      await tester.tap(find.text('Ok'));
+      await tester.pumpAndSettle();
+
+      final saved = await LocalInspectionRepository(prefs).fetchAll();
+      expect(saved.single.description, 'Coletar lixo da lixeira.');
+      expect(saved.single.type, OccurrenceType.full);
+      expect(saved.single.needsAction, isTrue);
+    });
+
     testWidgets('com erro no formulário, a tela rola até o primeiro campo com erro', (tester) async {
       await openInspectionForm(tester);
       await tester.scrollUntilVisible(

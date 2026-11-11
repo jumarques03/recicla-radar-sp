@@ -88,15 +88,17 @@ class DistrictSheet extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.md),
             ChartCard(
-              title: 'Histórico do índice',
+              title: 'Índice de demanda por semana',
               summary: 'Nas últimas $weeks semanas o índice foi de '
-                  '${district.history.first} para ${district.history.last}. '
+                  '${district.history.first} para ${district.history.last} (de 0 a 100). '
+                  'No gráfico, 1 é a semana mais antiga e $weeks é a atual. '
                   'É uma estimativa, não uma medição exata.',
-              height: 160,
+              height: 190,
               chart: SimpleLineChart(
-                labels: [for (var i = 0; i < weeks; i++) 'S${i + 1}'],
+                labels: [for (var i = 0; i < weeks; i++) '${i + 1}'],
                 values: [for (final value in district.history) value.toDouble()],
                 maxY: 100,
+                autoScale: true,
                 formatTooltip: (v) => 'Índice ${v.round()}',
               ),
             ),

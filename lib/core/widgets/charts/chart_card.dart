@@ -13,6 +13,7 @@ class ChartCard extends StatelessWidget {
     required this.chart,
     this.height = 220,
     this.legend,
+    this.bare = false,
   });
 
   final String title;
@@ -21,15 +22,20 @@ class ChartCard extends StatelessWidget {
   final double height;
   final Widget? legend;
 
+  /// Só o gráfico e o resumo, sem o cartão e sem o título. Para quando o gráfico
+  /// já está dentro de um bloco com título próprio.
+  final bool bare;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return AppCard(
-      child: Column(
+    final content = Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Semantics(header: true, child: Text(title, style: theme.textTheme.titleMedium)),
-          const SizedBox(height: AppSpacing.md),
+          if (!bare) ...[
+            Semantics(header: true, child: Text(title, style: theme.textTheme.titleMedium)),
+            const SizedBox(height: AppSpacing.md),
+          ],
           Semantics(
             label: '$title. $summary',
             image: true,
@@ -43,7 +49,7 @@ class ChartCard extends StatelessWidget {
             style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
           ),
         ],
-      ),
-    );
+      );
+    return bare ? content : AppCard(child: content);
   }
 }

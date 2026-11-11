@@ -161,6 +161,16 @@ class _InspectionScreenState extends State<InspectionScreen> {
     }
   }
 
+  /// Atalho para o pedido mais comum: escreve a frase pronta e marca que precisa de coleta.
+  void _fillCollectRequest() {
+    setState(() {
+      _description.text = 'Coletar lixo da lixeira.';
+      _needsAction = true;
+    });
+    // O campo "O que aconteceu?" só muda de valor se avisarmos o próprio campo.
+    if (_type == null) _typeKey.currentState?.didChange(OccurrenceType.full);
+  }
+
   @override
   Widget build(BuildContext context) {
     final bins = context.watch<BinsProvider>();
@@ -231,6 +241,15 @@ class _InspectionScreenState extends State<InspectionScreen> {
                       onSelectionChanged: (values) => setState(() => _severity = values.first),
                     ),
                     const SizedBox(height: AppSpacing.lg),
+                    Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      child: OutlinedButton.icon(
+                        onPressed: _fillCollectRequest,
+                        icon: const Icon(Icons.delete_sweep_outlined),
+                        label: const Text('Preencher: coletar lixo da lixeira'),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
                     TextFormField(
                       key: _descriptionKey,
                       controller: _description,
