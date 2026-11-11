@@ -35,22 +35,17 @@ Global Solution 2026.2 · FIAP · Cross-Platform Application Development · Desa
 
 ## Demonstração visual
 
-> Os prints entram em `assets/screenshots/`. Para cada tela, salve a imagem com o nome indicado e troque o texto *adicionar print* por `![legenda](assets/screenshots/nome.png)`.
+| Login | Criar conta | Visão geral e impacto | Mapa de demanda por distrito |
+| :---: | :---: | :---: | :---: |
+| <img src="assets/screenshots/01-login.jpg" width="170" alt="Login"> | <img src="assets/screenshots/02-cadastro.jpg" width="170" alt="Criar conta"> | <img src="assets/screenshots/03-visao-geral.jpg" width="170" alt="Visão geral e impacto"> | <img src="assets/screenshots/04-demanda.jpg" width="170" alt="Mapa de demanda por distrito"> |
 
-| Tela | Print |
-| --- | --- |
-| Login (`01-login.png`) | _adicionar print_ |
-| Visão geral e impacto (`02-visao-geral.png`) | _adicionar print_ |
-| Mapa de demanda por distrito (`03-demanda.png`) | _adicionar print_ |
-| Painel do distrito com histórico do índice (`04-distrito.png`) | _adicionar print_ |
-| Mapa de lixeiras (`05-lixeiras-mapa.png`) | _adicionar print_ |
-| Lista de lixeiras (`06-lixeiras-lista.png`) | _adicionar print_ |
-| Detalhe da lixeira (`07-lixeira.png`) | _adicionar print_ |
-| Lista de alertas (`08-alertas.png`) | _adicionar print_ |
-| Detalhe do alerta (`09-alerta.png`) | _adicionar print_ |
-| Registrar vistoria (`10-vistoria.png`) | _adicionar print_ |
-| Configurações (`11-configuracoes.png`) | _adicionar print_ |
-| Cadastro e recuperar senha (`12-cadastro.png`) | _adicionar print_ |
+| Painel do distrito | Mapa de lixeiras | Lista de lixeiras | Detalhe da lixeira |
+| :---: | :---: | :---: | :---: |
+| <img src="assets/screenshots/05-distrito.jpg" width="170" alt="Painel do distrito"> | <img src="assets/screenshots/06-lixeiras-mapa.jpg" width="170" alt="Mapa de lixeiras"> | <img src="assets/screenshots/07-lixeiras-lista.jpg" width="170" alt="Lista de lixeiras"> | <img src="assets/screenshots/08-lixeira.jpg" width="170" alt="Detalhe da lixeira"> |
+
+| Lista de alertas | Detalhe do alerta | Registrar vistoria | Configurações |
+| :---: | :---: | :---: | :---: |
+| <img src="assets/screenshots/09-alertas.jpg" width="170" alt="Lista de alertas"> | <img src="assets/screenshots/10-alerta.jpg" width="170" alt="Detalhe do alerta"> | <img src="assets/screenshots/11-vistoria.jpg" width="170" alt="Registrar vistoria"> | <img src="assets/screenshots/12-configuracoes.jpg" width="170" alt="Configurações"> |
 
 ## Como o app funciona
 
