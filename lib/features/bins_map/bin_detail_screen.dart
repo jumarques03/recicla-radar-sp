@@ -45,7 +45,10 @@ class _BinDetailScreenState extends State<BinDetailScreen> {
   }
 
   void _loadReadings() {
-    _readings = context.read<BinRepository>().fetchReadings(widget.binId, days: 7);
+    _readings = context.read<BinRepository>().fetchReadings(
+      widget.binId,
+      days: 7,
+    );
   }
 
   @override
@@ -56,14 +59,18 @@ class _BinDetailScreenState extends State<BinDetailScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(bin?.name ?? 'Lixeira')),
       body: bins.status != LoadStatus.ready
-          ? LoadableView<List<Bin>>(notifier: bins, isEmpty: (_) => false, builder: (_, _) => const SizedBox())
+          ? LoadableView<List<Bin>>(
+              notifier: bins,
+              isEmpty: (_) => false,
+              builder: (_, _) => const SizedBox(),
+            )
           : bin == null
-              ? const EmptyView(
-                  title: 'Lixeira não encontrada',
-                  message: 'Ela pode ter sido removida. Volte e escolha outra.',
-                  icon: Icons.search_off,
-                )
-              : _content(context, bin),
+          ? const EmptyView(
+              title: 'Lixeira não encontrada',
+              message: 'Ela pode ter sido removida. Volte e escolha outra.',
+              icon: Icons.search_off,
+            )
+          : _content(context, bin),
     );
   }
 
@@ -84,11 +91,16 @@ class _BinDetailScreenState extends State<BinDetailScreen> {
               const SizedBox(height: AppSpacing.md),
               BinStatusChip(bin.status),
               const SizedBox(height: AppSpacing.md),
-              _InfoRow(icon: Icons.place_outlined, label: 'Local', value: bin.address),
+              _InfoRow(
+                icon: Icons.place_outlined,
+                label: 'Local',
+                value: bin.address,
+              ),
               _InfoRow(
                 icon: Icons.schedule,
                 label: 'Última coleta',
-                value: '${Formatters.timeAgo(bin.lastCollection)} '
+                value:
+                    '${Formatters.timeAgo(bin.lastCollection)} '
                     '(${Formatters.dateTime(bin.lastCollection)})',
               ),
             ],
@@ -123,7 +135,7 @@ class _BinDetailScreenState extends State<BinDetailScreen> {
         const SectionTitle('Alertas desta lixeira'),
         _BinAlerts(binId: bin.id),
         // O resto fica recolhido: abre só o que a pessoa quer ver.
-        const SizedBox(height: AppSpacing.lg),
+        const SizedBox(height: AppSpacing.md),
         _Section(
           title: 'Material coletado',
           subtitle: '${Formatters.kg(bin.totalKg)} em 30 dias',
@@ -147,7 +159,8 @@ class _BinDetailScreenState extends State<BinDetailScreen> {
                 return SizedBox(
                   height: 260,
                   child: ErrorView(
-                    message: 'Não foi possível carregar o histórico. Tente de novo.',
+                    message:
+                        'Não foi possível carregar o histórico. Tente de novo.',
                     onRetry: () => setState(_loadReadings),
                   ),
                 );
@@ -162,16 +175,21 @@ class _BinDetailScreenState extends State<BinDetailScreen> {
                   ),
                 );
               }
-              final values = [for (final r in readings) r.fillPercent.toDouble()];
+              final values = [
+                for (final r in readings) r.fillPercent.toDouble(),
+              ];
               return ChartCard(
                 bare: true,
                 title: 'Quanto a lixeira encheu por dia (%)',
-                summary: 'Hoje a lixeira está com ${values.last.round()}%. '
+                summary:
+                    'Hoje a lixeira está com ${values.last.round()}%. '
                     'Há 7 dias estava com ${values.first.round()}%. '
                     'Quedas no gráfico indicam que houve coleta.',
                 height: 180,
                 chart: SimpleLineChart(
-                  labels: [for (final r in readings) Formatters.shortDate(r.date)],
+                  labels: [
+                    for (final r in readings) Formatters.shortDate(r.date),
+                  ],
                   values: values,
                   maxY: 100,
                   formatY: (v) => '${v.round()}%',
@@ -199,18 +217,27 @@ class _Section extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: ExpansionTile(
-        // Sem as linhas finas que o ExpansionTile desenha por padrão.
-        shape: const Border(),
-        collapsedShape: const Border(),
-        tilePadding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-        childrenPadding: const EdgeInsets.fromLTRB(AppSpacing.md, 0, AppSpacing.md, AppSpacing.md),
-        expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
-        title: Text(title, style: theme.textTheme.titleMedium),
-        subtitle: subtitle == null ? null : Text(subtitle!),
-        children: [child],
+    // Espaço entre um bloco e o próximo.
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm + 4),
+      child: Card(
+        clipBehavior: Clip.antiAlias,
+        child: ExpansionTile(
+          // Sem as linhas finas que o ExpansionTile desenha por padrão.
+          shape: const Border(),
+          collapsedShape: const Border(),
+          tilePadding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+          childrenPadding: const EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            0,
+            AppSpacing.md,
+            AppSpacing.md,
+          ),
+          expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
+          title: Text(title, style: theme.textTheme.titleMedium),
+          subtitle: subtitle == null ? null : Text(subtitle!),
+          children: [child],
+        ),
       ),
     );
   }
@@ -257,9 +284,14 @@ class _BinAlerts extends StatelessWidget {
       return AppCard(
         child: Row(
           children: [
-            Icon(Icons.check_circle_outline, color: context.statusColors.success),
+            Icon(
+              Icons.check_circle_outline,
+              color: context.statusColors.success,
+            ),
             const SizedBox(width: AppSpacing.sm + 4),
-            const Expanded(child: Text('Nenhum alerta ativo para esta lixeira.')),
+            const Expanded(
+              child: Text('Nenhum alerta ativo para esta lixeira.'),
+            ),
           ],
         ),
       );
@@ -298,13 +330,16 @@ class _BinInspections extends StatelessWidget {
     final items = context.watch<InspectionsProvider>().forBin(binId);
 
     if (items.isEmpty) {
-      return const AppCard(child: Text('Ainda não há vistorias registradas para esta lixeira.'));
+      return const AppCard(
+        child: Text('Ainda não há vistorias registradas para esta lixeira.'),
+      );
     }
     return Column(
       children: [
         for (final item in items.take(5)) ...[
           AppCard(
-            semanticLabel: '${item.type.label}, gravidade ${item.severity.label.toLowerCase()}, '
+            semanticLabel:
+                '${item.type.label}, gravidade ${item.severity.label.toLowerCase()}, '
                 '${Formatters.dateTime(item.dateTime)}. ${item.description}',
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -320,8 +355,12 @@ class _BinInspections extends StatelessWidget {
                 Text(item.description, style: theme.textTheme.bodyMedium),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
-                  item.authorName == null ? 'Registrada de forma anônima' : 'Por ${item.authorName}',
-                  style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                  item.authorName == null
+                      ? 'Registrada de forma anônima'
+                      : 'Por ${item.authorName}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ],
             ),
@@ -334,7 +373,11 @@ class _BinInspections extends StatelessWidget {
 }
 
 class _InfoRow extends StatelessWidget {
-  const _InfoRow({required this.icon, required this.label, required this.value});
+  const _InfoRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
 
   final IconData icon;
   final String label;
