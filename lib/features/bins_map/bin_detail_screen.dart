@@ -153,7 +153,7 @@ class _BinDetailScreenState extends State<BinDetailScreen> {
             }
             final values = [for (final r in readings) r.fillPercent.toDouble()];
             return ChartCard(
-              title: 'Enchimento por dia (%)',
+              title: 'Quanto a lixeira encheu por dia (%)',
               summary: 'Hoje a lixeira está com ${values.last.round()}%. '
                   'Há 7 dias estava com ${values.first.round()}%. '
                   'Quedas no gráfico indicam que houve coleta.',

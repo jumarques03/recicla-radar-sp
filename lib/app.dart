@@ -11,6 +11,8 @@ import 'package:recicla_radar_sp/core/theme/light_theme.dart';
 import 'package:recicla_radar_sp/data/local/alert_seen_store.dart';
 import 'package:recicla_radar_sp/data/local/alert_status_store.dart';
 import 'package:recicla_radar_sp/data/mock/district_seeds.dart';
+import 'package:recicla_radar_sp/data/local/boundary_cache.dart';
+import 'package:recicla_radar_sp/data/osm/cached_boundary_repository.dart';
 import 'package:recicla_radar_sp/data/osm/osm_boundary_repository.dart';
 import 'package:recicla_radar_sp/data/repositories/auth_repository.dart';
 import 'package:recicla_radar_sp/data/repositories/data_repositories.dart';
@@ -68,7 +70,10 @@ class ReciclaRadarApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (_) => BoundariesProvider(
             boundaryRepository ??
-                OsmBoundaryRepository(districtIds: [for (final seed in districtSeeds) seed.$1]),
+                CachedBoundaryRepository(
+                  source: OsmBoundaryRepository(districtIds: [for (final seed in districtSeeds) seed.$1]),
+                  cache: FileBoundaryCache(),
+                ),
           )..load(),
         ),
         ChangeNotifierProvider(create: (_) => SettingsProvider(prefs)),
@@ -133,8 +138,10 @@ class _AppViewState extends State<_AppView> {
       localizationsDelegates: GlobalMaterialLocalizations.delegates,
       builder: (context, child) {
         // Respeita a fonte do sistema e soma a escolha feita nas Configurações.
+        // O 100% das Configurações já é a fonte base reduzida (baseTextScale).
         final media = MediaQuery.of(context);
-        final scale = (media.textScaler.scale(1) * settings.textScale).clamp(0.8, 2.2);
+        final scale = (media.textScaler.scale(1) * settings.textScale * SettingsProvider.baseTextScale)
+            .clamp(0.7, 2.2);
         return MediaQuery(
           data: media.copyWith(textScaler: TextScaler.linear(scale)),
           child: child!,

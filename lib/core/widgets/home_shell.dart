@@ -87,7 +87,7 @@ class HomeShell extends StatelessWidget {
         ),
         _NavItem(
           label: 'Alertas',
-          tooltip: newAlerts > 0 ? 'Alertas, $newAlerts novos' : 'Alertas',
+          tooltip: newAlerts > 0 ? 'Alertas, $newAlerts não lidos' : 'Alertas',
           icon: Badge.count(
             count: newAlerts,
             isLabelVisible: newAlerts > 0,

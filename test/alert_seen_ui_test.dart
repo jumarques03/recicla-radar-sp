@@ -32,7 +32,7 @@ int? badgeCount(WidgetTester tester) {
 }
 
 void main() {
-  testWidgets('o selo conta os alertas novos e some ao marcar todos como vistos', (tester) async {
+  testWidgets('o selo conta os alertas novos e some ao marcar todos como lidos', (tester) async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
     await pumpLoggedIn(tester, prefs);
@@ -43,13 +43,13 @@ void main() {
 
     await tester.tap(find.text('Alertas').last);
     await tester.pumpAndSettle(const Duration(seconds: 1));
-    expect(find.text('Novo'), findsWidgets);
+    expect(find.text('Não lido'), findsWidgets);
 
     await tester.tap(find.byIcon(Icons.done_all));
     await tester.pumpAndSettle();
-    expect(find.textContaining('marcados como vistos'), findsOneWidget);
+    expect(find.textContaining('marcados como lidos'), findsOneWidget);
     expect(badgeCount(tester), isNull);
-    expect(find.text('Novo'), findsNothing);
+    expect(find.text('Não lido'), findsNothing);
 
     // Desfazer devolve o selo.
     await tester.tap(find.text('Desfazer'));
@@ -57,7 +57,7 @@ void main() {
     expect(badgeCount(tester), before);
   });
 
-  testWidgets('abrir um alerta o marca como visto', (tester) async {
+  testWidgets('abrir um alerta o marca como lido', (tester) async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
     await pumpLoggedIn(tester, prefs);
@@ -71,5 +71,25 @@ void main() {
     await tester.pumpAndSettle(const Duration(seconds: 1));
 
     expect(badgeCount(tester), before - 1);
+  });
+
+  testWidgets('cada alerta pode ser marcado como lido e como não lido, sozinho', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    await pumpLoggedIn(tester, prefs);
+    final before = badgeCount(tester)!;
+
+    await tester.tap(find.text('Alertas').last);
+    await tester.pumpAndSettle(const Duration(seconds: 1));
+
+    await tester.tap(find.byTooltip('Marcar como lido').first);
+    await tester.pumpAndSettle();
+    expect(badgeCount(tester), before - 1);
+    expect(find.byTooltip('Marcar como não lido'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Marcar como não lido'));
+    await tester.pumpAndSettle();
+    expect(badgeCount(tester), before);
+    expect(find.byTooltip('Marcar como não lido'), findsNothing);
   });
 }

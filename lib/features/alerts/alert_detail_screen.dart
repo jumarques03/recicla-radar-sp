@@ -30,7 +30,7 @@ class _AlertDetailScreenState extends State<AlertDetailScreen> {
   @override
   void initState() {
     super.initState();
-    // Abrir o alerta já conta como ter visto.
+    // Abrir o alerta já conta como lido.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) context.read<AlertsProvider>().markSeen(widget.alertId);
     });
@@ -112,7 +112,7 @@ class _AlertDetailScreenState extends State<AlertDetailScreen> {
               ),
               const SizedBox(height: AppSpacing.md),
               ChartCard(
-                title: 'Evidência',
+                title: 'Dados que justificam o alerta',
                 summary: '${alert.evidenceLabel}. Começa em ${_format(alert.evidence.first)} '
                     'e termina em ${_format(alert.evidence.last)}.',
                 height: 160,
@@ -122,7 +122,7 @@ class _AlertDetailScreenState extends State<AlertDetailScreen> {
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
-              _Section(icon: Icons.rule, title: 'Regra aplicada', text: alert.rule),
+              _Section(icon: Icons.rule, title: 'Como o alerta foi calculado', text: alert.rule),
               const SizedBox(height: AppSpacing.md),
               _Section(
                 icon: alert.confidence.icon,

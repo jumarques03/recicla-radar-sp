@@ -66,8 +66,8 @@ class AlertFilterPanel extends StatelessWidget {
         children: [
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Mostrar só os novos'),
-            subtitle: const Text('Alertas que você ainda não viu'),
+            title: const Text('Mostrar só os não lidos'),
+            subtitle: const Text('Alertas que você ainda não leu'),
             value: filters.onlyNew,
             onChanged: (value) => onChanged(filters.copyWith(onlyNew: value)),
           ),

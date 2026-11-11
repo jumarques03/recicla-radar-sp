@@ -100,7 +100,7 @@ class SettingsScreen extends StatelessWidget {
                   onChanged: settings.setTextScale,
                 ),
                 Text(
-                  'Assim fica o tamanho do texto no app.',
+                  'Este texto de exemplo mostra o tamanho escolhido. Vale para o app todo.',
                   style: theme.textTheme.bodyMedium,
                 ),
               ],
@@ -122,8 +122,12 @@ class SettingsScreen extends StatelessWidget {
                   max: 95,
                   divisions: 9,
                   label: '${settings.fillThreshold}%',
-                  semanticFormatterCallback: (value) => 'Limiar de enchimento ${value.round()}%',
+                  semanticFormatterCallback: (value) => 'Avisar acima de ${value.round()}% de enchimento',
                   onChanged: (value) => settings.setFillThreshold(value.round()),
+                ),
+                Text(
+                  'Quanto menor o valor, mais alertas aparecem.',
+                  style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                 ),
               ],
             ),

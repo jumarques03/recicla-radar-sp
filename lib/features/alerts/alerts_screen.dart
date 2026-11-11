@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:recicla_radar_sp/core/responsive/responsive.dart';
 import 'package:recicla_radar_sp/core/router/app_routes.dart';
 import 'package:recicla_radar_sp/core/theme/app_spacing.dart';
+import 'package:recicla_radar_sp/core/widgets/fade_slide_in.dart';
 import 'package:recicla_radar_sp/core/widgets/settings_action.dart';
 import 'package:recicla_radar_sp/core/widgets/state_views.dart';
 import 'package:recicla_radar_sp/data/models/alert.dart';
@@ -39,12 +40,19 @@ class _AlertsScreenState extends State<AlertsScreen> {
     if (!mounted) return;
     messenger
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(
-        content: Text(marked.length == 1
-            ? '1 alerta marcado como visto.'
-            : '${marked.length} alertas marcados como vistos.'),
-        action: SnackBarAction(label: 'Desfazer', onPressed: () => alerts.markUnseen(marked)),
-      ));
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            marked.length == 1
+                ? '1 alerta marcado como lido.'
+                : '${marked.length} alertas marcados como lidos.',
+          ),
+          action: SnackBarAction(
+            label: 'Desfazer',
+            onPressed: () => alerts.markUnseen(marked),
+          ),
+        ),
+      );
   }
 
   @override
@@ -57,10 +65,12 @@ class _AlertsScreenState extends State<AlertsScreen> {
         actions: [
           IconButton(
             tooltip: alerts.unseenCount > 0
-                ? 'Marcar os ${alerts.unseenCount} alertas novos como vistos'
-                : 'Nenhum alerta novo',
+                ? 'Marcar os ${alerts.unseenCount} alertas não lidos como lidos'
+                : 'Todos os alertas já foram lidos',
             icon: const Icon(Icons.done_all),
-            onPressed: alerts.unseenCount > 0 ? () => _markAllSeen(alerts) : null,
+            onPressed: alerts.unseenCount > 0
+                ? () => _markAllSeen(alerts)
+                : null,
           ),
           const SettingsAction(),
         ],
@@ -72,10 +82,13 @@ class _AlertsScreenState extends State<AlertsScreen> {
         emptyMessage: 'Quando o sistema perceber algo, o aviso aparece aqui.',
         builder: (context, list) {
           final visible = list
-              .where((a) =>
-                  (widget.districtId == null || a.districtId == widget.districtId) &&
-                  (widget.binId == null || a.binId == widget.binId) &&
-                  _filters.matches(a, isSeen: alerts.isSeen))
+              .where(
+                (a) =>
+                    (widget.districtId == null ||
+                        a.districtId == widget.districtId) &&
+                    (widget.binId == null || a.binId == widget.binId) &&
+                    _filters.matches(a, isSeen: alerts.isSeen),
+              )
               .toList();
 
           // A faixa de aviso e os filtros ficam fixos no topo. Com letra muito
@@ -86,7 +99,10 @@ class _AlertsScreenState extends State<AlertsScreen> {
               child: Column(
                 children: [
                   if (widget.districtId != null || widget.binId != null)
-                    _LinkedFilterChip(districtId: widget.districtId, binId: widget.binId),
+                    _LinkedFilterChip(
+                      districtId: widget.districtId,
+                      binId: widget.binId,
+                    ),
                   AlertFilterPanel(
                     filters: _filters,
                     onChanged: (filters) => setState(() => _filters = filters),
@@ -106,7 +122,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
                   ),
                 ]
               : [
-                  for (final alert in visible)
+                  for (final (index, alert) in visible.indexed)
                     ContentWidth(
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(
@@ -115,12 +131,24 @@ class _AlertsScreenState extends State<AlertsScreen> {
                           AppSpacing.md,
                           AppSpacing.sm + 4,
                         ),
-                        child: AlertCard(
-                          alert: alert,
-                          isNew: alert.status.isActive && !alerts.isSeen(alert.id),
-                          onTap: () => context.pushNamed(
-                            AppRoutes.alert,
-                            pathParameters: {'id': alert.id},
+                        // Os primeiros cards entram em sequência; os demais já aparecem prontos.
+                        child: FadeSlideIn(
+                          delay: Duration(
+                            milliseconds: 40 * (index < 6 ? index : 6),
+                          ),
+                          child: AlertCard(
+                            alert: alert,
+                            isNew:
+                                alert.status.isActive &&
+                                !alerts.isSeen(alert.id),
+                            // Só alertas ativos entram na contagem do selo, então só eles têm o botão.
+                            onToggleRead: alert.status.isActive
+                                ? () => alerts.toggleSeen(alert.id)
+                                : null,
+                            onTap: () => context.pushNamed(
+                              AppRoutes.alert,
+                              pathParameters: {'id': alert.id},
+                            ),
                           ),
                         ),
                       ),
@@ -136,8 +164,9 @@ class _AlertsScreenState extends State<AlertsScreen> {
                 bottom: AppSpacing.md,
               ),
               itemCount: headerCount + cards.length,
-              itemBuilder: (context, index) =>
-                  index < headerCount ? headers[index] : cards[index - headerCount],
+              itemBuilder: (context, index) => index < headerCount
+                  ? headers[index]
+                  : cards[index - headerCount],
             ),
           );
 
@@ -165,15 +194,22 @@ class _LinkedFilterChip extends StatelessWidget {
   Widget build(BuildContext context) {
     String? label;
     if (binId != null) {
-      label = 'Lixeira: ${context.read<BinsProvider>().byId(binId!)?.name ?? 'desconhecida'}';
+      label =
+          'Lixeira: ${context.read<BinsProvider>().byId(binId!)?.name ?? 'desconhecida'}';
     } else {
-      for (final district in context.read<DistrictsProvider>().data ?? const <District>[]) {
+      for (final district
+          in context.read<DistrictsProvider>().data ?? const <District>[]) {
         if (district.id == districtId) label = 'Distrito: ${district.name}';
       }
     }
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.sm, AppSpacing.md, 0),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.sm,
+        AppSpacing.md,
+        0,
+      ),
       child: Align(
         alignment: Alignment.centerLeft,
         child: InputChip(

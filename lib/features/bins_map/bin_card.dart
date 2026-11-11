@@ -24,11 +24,19 @@ class FillBar extends StatelessWidget {
         Expanded(
           child: ClipRRect(
             borderRadius: BorderRadius.circular(height),
-            child: LinearProgressIndicator(
-              value: percent / 100,
-              minHeight: height,
-              color: color,
-              backgroundColor: theme.colorScheme.surfaceContainerHighest,
+            // Anima até o valor, e de novo se o enchimento mudar.
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(end: percent / 100),
+              duration: MediaQuery.disableAnimationsOf(context)
+                  ? Duration.zero
+                  : const Duration(milliseconds: 600),
+              curve: Curves.easeOutCubic,
+              builder: (context, value, _) => LinearProgressIndicator(
+                value: value,
+                minHeight: height,
+                color: color,
+                backgroundColor: theme.colorScheme.surfaceContainerHighest,
+              ),
             ),
           ),
         ),

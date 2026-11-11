@@ -200,6 +200,8 @@ void main() {
       await tester.tap(find.text('Lixeira danificada').last);
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextFormField).first, 'Tampa quebrada e lixo espalhado');
+      // Ao digitar, a tela rola até o campo; espera terminar antes de tocar no próximo.
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Data e hora'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Escolher'));
@@ -212,6 +214,7 @@ void main() {
         scrollable: find.descendant(of: find.byType(ListView).last, matching: find.byType(Scrollable)).first,
       );
       await tester.ensureVisible(find.text('Salvar vistoria'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Salvar vistoria'));
       await tester.pumpAndSettle(const Duration(seconds: 2));
     }
@@ -250,6 +253,7 @@ void main() {
         scrollable: find.descendant(of: find.byType(ListView).last, matching: find.byType(Scrollable)).first,
       );
       await tester.ensureVisible(find.text('Salvar vistoria'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Salvar vistoria'));
       await tester.pumpAndSettle(const Duration(seconds: 1));
 

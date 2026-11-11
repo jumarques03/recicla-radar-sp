@@ -53,10 +53,21 @@ class _MessageView extends StatelessWidget {
             children: [
               Icon(icon, size: 56, color: theme.colorScheme.primary),
               const SizedBox(height: AppSpacing.md),
-              Text(title, style: theme.textTheme.titleLarge, textAlign: TextAlign.center),
+              Text(
+                title,
+                style: theme.textTheme.titleLarge,
+                textAlign: TextAlign.center,
+              ),
               const SizedBox(height: AppSpacing.sm),
-              Text(message, style: theme.textTheme.bodyLarge, textAlign: TextAlign.center),
-              if (action != null) ...[const SizedBox(height: AppSpacing.lg), action!],
+              Text(
+                message,
+                style: theme.textTheme.bodyLarge,
+                textAlign: TextAlign.center,
+              ),
+              if (action != null) ...[
+                const SizedBox(height: AppSpacing.lg),
+                action!,
+              ],
             ],
           ),
         ),
@@ -124,19 +135,34 @@ class LoadableView<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    switch (notifier.status) {
-      case LoadStatus.idle:
-      case LoadStatus.loading:
-        return const LoadingView();
-      case LoadStatus.error:
-        return ErrorView(
-          message: notifier.error ?? 'Não foi possível carregar. Tente de novo.',
+    // A chave muda só quando muda o tipo de tela (carregando, erro, vazio, conteúdo),
+    // então atualizar os dados não reinicia a animação.
+    final (key, child) = switch (notifier.status) {
+      LoadStatus.idle ||
+      LoadStatus.loading => ('loading', const LoadingView() as Widget),
+      LoadStatus.error => (
+        'error',
+        ErrorView(
+          message:
+              notifier.error ?? 'Não foi possível carregar. Tente de novo.',
           onRetry: notifier.load,
-        );
-      case LoadStatus.ready:
-        final data = notifier.data as T;
-        if (isEmpty(data)) return EmptyView(title: emptyTitle, message: emptyMessage);
-        return builder(context, data);
+        ),
+      ),
+      LoadStatus.ready => _ready(context),
+    };
+    return AnimatedSwitcher(
+      duration: MediaQuery.disableAnimationsOf(context)
+          ? Duration.zero
+          : const Duration(milliseconds: 250),
+      child: KeyedSubtree(key: ValueKey(key), child: child),
+    );
+  }
+
+  (String, Widget) _ready(BuildContext context) {
+    final data = notifier.data as T;
+    if (isEmpty(data)) {
+      return ('empty', EmptyView(title: emptyTitle, message: emptyMessage));
     }
+    return ('content', builder(context, data));
   }
 }

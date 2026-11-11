@@ -84,13 +84,18 @@ as telas não mudam.
 ## Tecnologias
 
 Flutter (Material 3), `go_router`, `provider`, `flutter_map` (tiles do OpenStreetMap, sem
-chave de API), `fl_chart`, `shared_preferences`, `http`.
+chave de API), `fl_chart`, `shared_preferences`, `path_provider`, `http`.
 
 ## Mapas e dados do OpenStreetMap
 
 - **Contorno de São Paulo e limites dos 96 distritos:** o app busca no serviço Nominatim do
-  OpenStreetMap quando abre (`lib/data/osm`), já simplificados. Nada é baixado para dentro
-  do projeto. Sem internet, os mapas funcionam sem o contorno e mostram um aviso.
+  OpenStreetMap na primeira vez que o app abre com internet (`lib/data/osm`), já simplificados.
+  Nada é baixado para dentro do projeto. O resultado é guardado num arquivo no aparelho
+  (`boundaries.v1.json`), então nas próximas vezes o contorno aparece na hora e sem internet.
+  Se o app nunca abriu com internet, o mapa mostra um aviso e o botão "Tentar de novo".
+- **Fundo do mapa (tiles):** ficam guardados no aparelho por 30 dias (até 200 MB). Sem
+  internet aparecem as regiões que a pessoa já viu; o resto fica em branco, mas os distritos,
+  as lixeiras e as listas continuam funcionando.
 - **Pontos de descarte e lixeiras:** são dados criados para o projeto
   (`lib/data/mock/district_seeds.dart`). Esse arquivo é gerado por
   `python tool/gerar_distritos.py`, que consulta o OpenStreetMap uma vez para sortear os
@@ -118,9 +123,10 @@ aparelho (`shared_preferences`), então não se perde ao fechar o app.
   dias seguidos (leitura fora do padrão) e quantas lixeiras do distrito tiveram queda (coleta).
 - Cada alerta mostra a evidência, a regra aplicada, o motivo da confiança e as limitações.
 - Mudar o limiar de enchimento nas Configurações recalcula os alertas.
-- **Alertas vistos:** o selo da aba Alertas conta só os alertas ativos que a pessoa ainda não
-  abriu. Abrir um alerta o marca como visto, e o botão de duplo visto na lista marca todos
-  (com "Desfazer"). Os vistos ficam salvos no aparelho.
+- **Alertas lidos:** o selo da aba Alertas conta só os alertas ativos que a pessoa ainda não
+  leu. Abrir um alerta o marca como lido; cada card tem um botão para marcar como lido ou
+  não lido; e o botão de duplo visto na lista marca todos (com "Desfazer"). Tudo fica salvo
+  no aparelho, assim como o status (Em análise, Resolvido, Descartado) de cada alerta.
 
 ## Vistorias e privacidade
 
@@ -149,7 +155,8 @@ lista. O teste `test/responsive_test.dart` percorre o app em 9 tamanhos, de 320x
 - Contraste WCAG AA nos temas claro e escuro (verificado em `test/contrast_test.dart`).
 - Tema de **alto contraste** (Configurações), com contraste mínimo 7:1 (AAA), bordas grossas, e que
   também acompanha o ajuste de alto contraste do aparelho.
-- Respeita o tamanho de fonte do sistema e permite ajustar nas Configurações.
+- Respeita o tamanho de fonte do sistema e permite ajustar nas Configurações (90% a 150%, onde
+  100% já é um tamanho compacto: 85% da fonte padrão do Material).
 - Alvos de toque de pelo menos 48 dp e barra inferior com rótulos sempre visíveis.
 - Status e gravidade sempre com ícone e texto, nunca só cor.
 - Gráficos e marcadores do mapa com descrição para leitores de tela e resumo em texto.

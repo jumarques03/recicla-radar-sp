@@ -64,6 +64,10 @@ class AlertsProvider extends LoadableNotifier<List<Alert>> {
     await _saveSeen({..._seen, alertId});
   }
 
+  /// Alterna entre lido e não lido (botão de cada alerta na lista).
+  Future<void> toggleSeen(String alertId) =>
+      _seen.contains(alertId) ? markUnseen({alertId}) : markSeen(alertId);
+
   /// Marca todos os alertas atuais como vistos. Devolve os que eram novos, para
   /// a tela poder oferecer "Desfazer".
   Future<Set<String>> markAllSeen() async {

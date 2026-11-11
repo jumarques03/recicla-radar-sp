@@ -23,7 +23,7 @@ class ImpactStatGrid extends StatelessWidget {
     final cards = [
       StatCard(
         icon: Icons.scale_outlined,
-        label: 'Coletado',
+        label: 'Total coletado',
         value: Formatters.kg(summary.totalKg),
         footnote: 'nos últimos ${summary.days} dias',
         onTap: context.showAllBins,
@@ -44,9 +44,9 @@ class ImpactStatGrid extends StatelessWidget {
       ),
       StatCard(
         icon: Icons.eco_outlined,
-        label: 'Fora do aterro',
+        label: 'Desviado do aterro',
         value: Formatters.kg(summary.divertedKg),
-        footnote: 'material reaproveitado',
+        footnote: 'estimativa de reciclagem',
       ),
     ];
 

@@ -18,7 +18,8 @@ abstract final class SpMap {
     const LatLng(-23.30, -46.30),
   );
 
-  static const String tileUrl = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+  static const String tileUrl =
+      'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
   static const String userAgent = 'br.com.fiap.recicla_radar_sp';
 
   static MapOptions options({double maxZoom = 17}) {
@@ -28,7 +29,10 @@ abstract final class SpMap {
       // reconstrução da tela nesse instante quebra a câmera.
       initialCenter: center,
       initialZoom: 9.6,
-      initialCameraFit: CameraFit.bounds(bounds: bounds, padding: const EdgeInsets.all(8)),
+      initialCameraFit: CameraFit.bounds(
+        bounds: bounds,
+        padding: const EdgeInsets.all(8),
+      ),
       // Só o centro precisa ficar na área; assim funciona em qualquer tamanho de tela.
       cameraConstraint: CameraConstraint.containCenter(bounds: panLimit),
       minZoom: 9,
@@ -36,5 +40,21 @@ abstract final class SpMap {
     );
   }
 
-  static TileLayer tileLayer() => TileLayer(urlTemplate: tileUrl, userAgentPackageName: userAgent);
+  /// Define como os pedaços do mapa (tiles) ficam guardados no aparelho. Chame uma vez,
+  /// antes de abrir o primeiro mapa. Os tiles valem por 30 dias, mesmo vencidos pelo
+  /// cabeçalho do servidor, para o mapa continuar aparecendo sem internet.
+  /// Só aparecem as regiões que a pessoa já olhou com internet.
+  static void configureTileCache() {
+    BuiltInMapCachingProvider.getOrCreateInstance(
+      overrideFreshAge: const Duration(days: 30),
+      maxCacheSize: 200 * 1000 * 1000,
+    );
+  }
+
+  static TileLayer tileLayer() => TileLayer(
+    urlTemplate: tileUrl,
+    userAgentPackageName: userAgent,
+    // Sem internet, o tile que falta fica transparente em vez de gerar erro.
+    tileProvider: NetworkTileProvider(silenceExceptions: true),
+  );
 }

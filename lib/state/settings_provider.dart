@@ -16,6 +16,10 @@ class SettingsProvider extends ChangeNotifier {
   static const String _consentKey = 'consent';
   static const String _highContrastKey = 'highContrast';
 
+  /// O texto do app é desenhado em 85% do tamanho padrão; a opção de 100% nas
+  /// Configurações corresponde a esse tamanho.
+  static const double baseTextScale = 0.85;
+
   static const double minTextScale = 0.9;
   static const double maxTextScale = 1.5;
 
