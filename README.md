@@ -1,112 +1,93 @@
 # Recicla Radar SP
 
-Painel de inteligência territorial para fiscais e gestores da limpeza urbana de São Paulo.
-O app mostra onde há mais demanda de descarte, onde estão as lixeiras inteligentes
-recicladoras, quanto cada uma coletou e quais alertas preditivos pedem atenção
-(por exemplo: "lixeira deve encher em 6 h"). Também permite registrar vistorias.
+Painel de inteligência territorial que mostra a fiscais e gestores da limpeza urbana de São Paulo onde há mais demanda de descarte, quais lixeiras de reciclagem estão enchendo ou sem sinal e quais alertas pedem atenção.
 
-> **O app sugere e a pessoa decide.** Nenhuma ação de alto impacto é automática.
+> **O app sugere, a pessoa decide.** Nenhum alerta toma ação sozinho: cada um traz evidência, confiança e limitações, e a decisão final é sempre humana.
 
-Trabalho da FIAP, Global Solution 2026.2, Territory Predictive Insights.
+Global Solution 2026.2 · FIAP · Cross-Platform Application Development · Desafio *Territory Predictive Insights*.
 
-**Estado atual:** front-end completo para Android, com dados simulados (mock) e tudo salvo no
-aparelho. Não há back-end nem autenticação real.
+---
 
-## Como executar
+## Ideia inicial
 
-O foco do app é o **Android**, que é a plataforma testada. O projeto também tem as pastas
-de iOS, web, Windows, Linux e macOS, mas elas não foram testadas. Requisitos:
-[Flutter](https://docs.flutter.dev/get-started/install) 3.x, Android SDK e um emulador ou
-celular Android.
+**Problema.** Em São Paulo, as lixeiras de reciclagem ficam mal distribuídas em relação a onde mais se descarta, e quem fiscaliza só descobre que uma lixeira encheu, quebrou ou parou de enviar dados quando o problema já aconteceu.
 
-```bash
-flutter pub get
-flutter devices          # mostra os dispositivos disponíveis
-flutter run -d <id>      # roda no dispositivo escolhido
-```
+**Público.** Fiscais e gestores da limpeza urbana.
 
-Para testar o login, use a conta de demonstração:
+**Solução.** Um app Flutter que reúne num só lugar os indicadores da cidade, a localização das lixeiras e alertas preditivos, e deixa o fiscal registrar vistorias em campo.
 
-- e-mail: `fiscal@reciclaradar.sp`
-- senha: `senha123`
+**Impacto esperado.** Mais material reciclável desviado do aterro (indicador de benefício social exibido no app) e manutenção mais rápida.
 
-Outros comandos úteis:
+### Como o projeto evoluiu
 
-```bash
-flutter analyze        # análise estática
-flutter test           # testes (validadores, alertas, contraste, navegação, mapas)
-flutter build apk --debug
-```
+1. **Base:** tema claro e escuro, modelos, rotas e as telas principais com dados fixos.
+2. **Mapas e dados:** pontos de descarte e lixeiras distribuídos pelos 96 distritos, com o contorno dos distritos vindo do OpenStreetMap.
+3. **Alertas de verdade:** os alertas passaram a ser calculados a partir das leituras das lixeiras, e a decisão sobre cada um fica salva no aparelho.
+4. **Uso em campo:** vistorias salvas no aparelho, telas ligadas entre si, layout responsivo, alto contraste, cache do mapa para uso sem internet e animações curtas.
 
-## Telas
+## Integrantes
 
-| Rota | Tela |
+| Nome completo | RM |
 | --- | --- |
-| `/login` | Login |
-| `/cadastro` | Cadastro |
-| `/recuperar-senha` | Recuperar senha |
-| `/home` | Visão geral e impacto |
-| `/demanda` | Mapa de demanda por distrito |
-| `/lixeiras` | Mapa e lista de lixeiras |
-| `/lixeiras/:id` | Detalhe da lixeira |
-| `/alertas` | Lista de alertas |
-| `/alertas/:id` | Detalhe do alerta |
-| `/vistoria?binId=` | Formulário de vistoria |
-| `/configuracoes` | Configurações |
+| Carolina Monteiro Bernardo | 564651 |
+| Isabelle Dias Belini | 566464 |
+| Júlia Souza Marques | 565010 |
 
-## Estrutura
+## Demonstração visual
 
-```
-lib/
-  main.dart, app.dart     ponto de entrada, temas e injeção de dependências
-  core/
-    theme/                cores, tipografia, espaçamentos, tema claro e escuro
-    router/               rotas nomeadas (go_router)
-    widgets/              componentes reutilizáveis (cards, gráficos, estados)
-    utils/                validadores e formatadores
-  data/
-    models/               Bin, District, Alert, Inspection, Reading...
-    repositories/         interfaces abstratas + implementações mock
-    mock/                 dados simulados de São Paulo
-  domain/                 esqueleto do motor de alertas (uma regra de exemplo)
-  state/                  providers (ChangeNotifier)
-  features/               auth, overview, demand_map, bins_map, alerts, inspection, settings
-test/
-assets/screenshots/       capturas de tela (a preencher)
-assets/geojson/           (vazia: os limites vêm do OpenStreetMap em tempo real)
-tool/                     script que gera os pontos de descarte dos distritos
-```
+> Os prints entram em `assets/screenshots/`. Para cada tela, salve a imagem com o nome indicado e troque o texto *adicionar print* por `![legenda](assets/screenshots/nome.png)`.
 
-Os repositórios são interfaces (`lib/data/repositories`). Para trocar o mock por
-Firebase, basta passar outras implementações para `ReciclaRadarApp` em `lib/app.dart`;
-as telas não mudam.
+| Tela | Print |
+| --- | --- |
+| Login (`01-login.png`) | _adicionar print_ |
+| Visão geral e impacto (`02-visao-geral.png`) | _adicionar print_ |
+| Mapa de demanda por distrito (`03-demanda.png`) | _adicionar print_ |
+| Painel do distrito com histórico do índice (`04-distrito.png`) | _adicionar print_ |
+| Mapa de lixeiras (`05-lixeiras-mapa.png`) | _adicionar print_ |
+| Lista de lixeiras (`06-lixeiras-lista.png`) | _adicionar print_ |
+| Detalhe da lixeira (`07-lixeira.png`) | _adicionar print_ |
+| Lista de alertas (`08-alertas.png`) | _adicionar print_ |
+| Detalhe do alerta (`09-alerta.png`) | _adicionar print_ |
+| Registrar vistoria (`10-vistoria.png`) | _adicionar print_ |
+| Configurações (`11-configuracoes.png`) | _adicionar print_ |
+| Cadastro e recuperar senha (`12-cadastro.png`) | _adicionar print_ |
 
-## Tecnologias
+## Como o app funciona
 
-Flutter (Material 3), `go_router`, `provider`, `flutter_map` (tiles do OpenStreetMap, sem
-chave de API), `fl_chart`, `shared_preferences`, `path_provider`, `http`.
+O fiscal entra com a conta de demonstração e vê quatro abas:
 
-## Mapas e dados do OpenStreetMap
+- **Visão geral:** quilos coletados, lixeiras operando, alertas ativos e material desviado do aterro, com filtros de período (7, 30 e 90 dias) e de material, e gráficos de evolução e de participação de cada material.
+- **Demanda:** mapa de São Paulo com os 96 distritos coloridos pelo índice de demanda (0 a 100). Tocar num distrito abre o painel com o histórico semanal do índice e atalhos para as lixeiras e os alertas dele. Há também uma lista como alternativa ao mapa.
+- **Lixeiras:** mapa e lista, com filtros por situação. O detalhe mostra o enchimento, a última coleta, os alertas e, em blocos recolhidos, o material coletado, o enchimento dos últimos 7 dias e as vistorias.
+- **Alertas:** lista do mais grave ao menos grave (e, em igual gravidade, do mais antigo ao mais novo). Cada alerta mostra os dados que o justificam, como foi calculado, a confiança e suas limitações, e permite marcar como *Em análise*, *Resolvido* ou *Descartado*. Alertas resolvidos ou descartados saem da lista e ficam numa seção que se abre e se fecha.
 
-- **Contorno de São Paulo e limites dos 96 distritos:** o app busca no serviço Nominatim do
-  OpenStreetMap na primeira vez que o app abre com internet (`lib/data/osm`), já simplificados.
-  Nada é baixado para dentro do projeto. O resultado é guardado num arquivo no aparelho
-  (`boundaries.v1.json`), então nas próximas vezes o contorno aparece na hora e sem internet.
-  Se o app nunca abriu com internet, o mapa mostra um aviso e o botão "Tentar de novo".
-- **Fundo do mapa (tiles):** ficam guardados no aparelho por 30 dias (até 200 MB). Sem
-  internet aparecem as regiões que a pessoa já viu; o resto fica em branco, mas os distritos,
-  as lixeiras e as listas continuam funcionando.
-- **Pontos de descarte e lixeiras:** são dados criados para o projeto
-  (`lib/data/mock/district_seeds.dart`). Esse arquivo é gerado por
-  `python tool/gerar_distritos.py`, que consulta o OpenStreetMap uma vez para sortear os
-  pontos dentro de cada distrito.
-- Os dados do mapa são © colaboradores do OpenStreetMap, licença ODbL.
+Alerta, lixeira e distrito se levam uns aos outros (por exemplo, do alerta para a lixeira, para o mapa e para o distrito). O selo da aba Alertas conta só os alertas ativos ainda não lidos; cada alerta pode ser marcado como lido ou não lido, ou todos de uma vez.
 
-## Alertas
+**Vistoria:** formulário com lixeira, tipo de ocorrência, gravidade, descrição, data e hora e se precisa de coleta ou reparo, com validação e um atalho que preenche "Coletar lixo da lixeira". Vistorias graves geram alerta.
 
-Os alertas são calculados a partir dos dados das lixeiras (`lib/domain/alert_engine.dart`) e
-só sugerem: a decisão (em análise, resolvido ou descartado) é de uma pessoa e fica salva no
-aparelho (`shared_preferences`), então não se perde ao fechar o app.
+**Configurações:** tema (sistema, claro ou escuro), alto contraste, tamanho da letra, limiar de enchimento dos alertas e consentimento de uso dos dados pessoais.
+
+## Funcionalidades
+
+- [x] 11 rotas nomeadas com passagem de parâmetros (`/lixeiras/:id`, `/alertas/:id`, `/vistoria?binId=`...)
+- [x] 3 dashboards: visão geral, demanda por distrito e lixeiras, com gráficos, cards e histórico
+- [x] Alertas calculados a partir dos dados, com evidência, confiança e limitações
+- [x] Aviso visível de que os alertas apoiam, mas não substituem, a decisão humana
+- [x] Estado global compartilhado entre telas, com carregando, erro e lista vazia
+- [x] Dados de serviço externo (OpenStreetMap) e dados simulados por repositórios
+- [x] Persistência local: status e leitura dos alertas, vistorias, configurações e contorno do mapa
+- [x] App útil sem conexão (dados e cache no aparelho)
+- [x] Formulários com validação (login, cadastro, recuperar senha e vistoria)
+- [x] Tema claro, escuro e de alto contraste; layout responsivo
+- [x] Acessibilidade, consentimento e indicador de benefício social
+- [x] Mapa com os indicadores por distrito
+- [x] Animações curtas e testes automatizados (mais de 200)
+
+## Dados e alertas
+
+**Fonte dos dados.** Os pontos de descarte, as lixeiras e as leituras são **sintéticos**, criados para o projeto a partir da lista real de distritos (`tool/gerar_distritos.py` consulta o OpenStreetMap uma vez para sortear pontos dentro de cada distrito). O contorno de São Paulo e dos 96 distritos vem do **OpenStreetMap** (serviço Nominatim) e fica guardado no aparelho depois da primeira busca.
+
+**Como os alertas são gerados** (`lib/domain/alert_engine.dart`). Cada regra lê as leituras das lixeiras e devolve alertas com id estável, para a decisão da pessoa não se perder quando os dados são recalculados.
 
 | Alerta | Dispara quando | Gravidade |
 | --- | --- | --- |
@@ -114,58 +95,81 @@ aparelho (`shared_preferences`), então não se perde ao fechar o app.
 | Sem sinal | Nenhuma leitura há mais de 12 h | Alta; crítica acima de 48 h |
 | Leitura fora do padrão | Um material passa de 2 vezes a média de 30 dias, por 2 dias seguidos ou mais | Média; alta a partir de 3 vezes |
 | Coleta abaixo do esperado | Volume do distrito em 7 dias cai mais de 15% contra a média das 4 semanas anteriores | Média; alta acima de 30% |
-| Demanda alta com pouca cobertura | Índice de demanda 85 ou mais e no máximo 2 lixeiras funcionando | Média; alta sem nenhuma |
-| Vistoria de campo | Vistoria dos últimos 7 dias com gravidade alta, ou que aponta lixeira danificada ou vandalizada | Crítica (alta + pedido de coleta), alta ou média |
+| Demanda alta com pouca cobertura | Índice 85 ou mais e no máximo 2 lixeiras funcionando | Média; alta sem nenhuma |
+| Vistoria de campo | Vistoria dos últimos 7 dias grave, ou que aponta lixeira danificada ou vandalizada | Crítica, alta ou média |
 
-- O ritmo de enchimento vem das leituras desde a última coleta. Com menos de 4 leituras o app
-  não prevê o tempo e avisa que não há dados suficientes.
-- A confiança depende dos dados: quantidade de leituras e regularidade do ritmo (enchimento),
-  dias seguidos (leitura fora do padrão) e quantas lixeiras do distrito tiveram queda (coleta).
-- Cada alerta mostra a evidência, a regra aplicada, o motivo da confiança e as limitações.
-- Mudar o limiar de enchimento nas Configurações recalcula os alertas.
-- **Alertas lidos:** o selo da aba Alertas conta só os alertas ativos que a pessoa ainda não
-  leu. Abrir um alerta o marca como lido; cada card tem um botão para marcar como lido ou
-  não lido; e o botão de duplo visto na lista marca todos (com "Desfazer"). Tudo fica salvo
-  no aparelho, assim como o status (Em análise, Resolvido, Descartado) de cada alerta.
+**Métricas.** Ritmo de enchimento (% por hora, desde a última coleta), média de 30 dias por material, variação semanal de volume por distrito e índice de demanda (posição do distrito em relação aos demais). A **confiança** (alta, média ou baixa) vem da quantidade de leituras, da regularidade do ritmo, dos dias seguidos e de quantas lixeiras do distrito foram afetadas, e o motivo aparece escrito no alerta.
 
-## Vistorias e privacidade
+**Limitações e vieses.**
+- Os dados são simulados: os números mostram o funcionamento, não a realidade de São Paulo.
+- O percentual de material reaproveitado (75%) é uma suposição do projeto, não uma medição oficial.
+- O índice de demanda é relativo (compara distritos entre si) e pode esconder distritos pequenos ou com poucos pontos de descarte.
+- A previsão supõe ritmo de enchimento constante; descartes em eventos ou feriados a tornam menos precisa.
 
-- As vistorias ficam salvas no aparelho (`shared_preferences`), sem servidor. Elas aparecem no
-  detalhe da lixeira e, quando graves, geram um alerta.
-- Com o consentimento ligado (Configurações ou checkbox do cadastro), a vistoria leva o nome de
-  quem registrou. Sem consentimento, ela é anônima. O formulário avisa qual dos dois vale.
-- O app guarda só o mínimo de dado pessoal: o nome, e só com consentimento.
+**Quando a previsão não é confiável.** Com menos de 4 leituras desde a última coleta o app **não prevê** o tempo de enchimento e avisa que não há dados suficientes. Lixeira sem sinal, em manutenção ou recém-coletada também tem previsão fraca, e a confiança cai.
 
-## Telas ligadas entre si
+## Privacidade e inclusão
 
-Alerta, lixeira e distrito se levam uns aos outros: o alerta tem "Ver a lixeira", "Ver no mapa" e
-"Ver o distrito"; o painel do distrito leva às lixeiras e aos alertas dele; o detalhe da lixeira
-mostra os alertas e as vistorias dela; os cartões da visão geral abrem as listas. As rotas aceitam
-filtros (`/lixeiras?distrito=`, `/lixeiras?lixeira=`, `/alertas?distrito=`, `/demanda?distrito=`).
+- **Consentimento:** o cadastro pede o aceite, e as Configurações permitem mudar a escolha. Com o consentimento ligado, a vistoria leva o nome de quem registrou; desligado, é registrada de forma **anônima**. O formulário avisa qual dos dois vale.
+- **Dados pessoais mínimos:** só o nome, e só com consentimento. Tudo fica no aparelho (`shared_preferences`); não há servidor.
+- **Login simulado:** serve para demonstrar o fluxo e não oferece segurança real.
+- **Acessibilidade:** contraste WCAG AA nos temas claro e escuro e AAA (7:1) no de alto contraste, verificados por teste; tamanho de letra ajustável e respeito à fonte do sistema; alvos de toque de pelo menos 48 dp; gravidade e status sempre com ícone e texto, nunca só cor; descrições para leitores de tela em botões, gráficos e marcadores; animações desligadas quando o aparelho pede menos movimento.
 
-## Layout responsivo
+## Tecnologias e decisões técnicas
 
-Em telas a partir de 720 dp a barra de baixo vira um menu lateral (com nomes a partir de 1100 dp).
-Listas, detalhes e formulários ficam centralizados com largura máxima, e na visão geral os
-gráficos ficam lado a lado. Com letra muito grande, a faixa de aviso dos alertas rola junto com a
-lista. O teste `test/responsive_test.dart` percorre o app em 9 tamanhos, de 320x640 a 1366x768.
+| Escolha | Por quê |
+| --- | --- |
+| Flutter (Material 3) | Um código só, com componentes prontos e temas claro e escuro |
+| `go_router` | Rotas nomeadas, parâmetros e abas que mantêm o estado |
+| `provider` | Estado global simples (`ChangeNotifier`), com carregando, erro e vazio em um só lugar |
+| `flutter_map` + OpenStreetMap | Mapas sem chave de API e com cache dos tiles |
+| `fl_chart` | Gráficos de linha, barras e pizza |
+| `shared_preferences` | Preferências, status e leitura dos alertas e vistorias no aparelho |
+| `path_provider` | Pasta onde fica o cache do contorno dos distritos |
+| `http` | Consulta ao Nominatim |
+| `intl` | Datas e números em português, com duas casas decimais |
 
-## Acessibilidade
+**Arquitetura.** Camadas separadas, para trocar a fonte dos dados sem mexer nas telas (basta passar outras implementações em `lib/app.dart`):
 
-- Contraste WCAG AA nos temas claro e escuro (verificado em `test/contrast_test.dart`).
-- Tema de **alto contraste** (Configurações), com contraste mínimo 7:1 (AAA), bordas grossas, e que
-  também acompanha o ajuste de alto contraste do aparelho.
-- Respeita o tamanho de fonte do sistema e permite ajustar nas Configurações (90% a 150%, onde
-  100% já é um tamanho compacto: 85% da fonte padrão do Material).
-- Alvos de toque de pelo menos 48 dp e barra inferior com rótulos sempre visíveis.
-- Status e gravidade sempre com ícone e texto, nunca só cor.
-- Gráficos e marcadores do mapa com descrição para leitores de tela e resumo em texto.
+```
+lib/
+  core/       tema, rotas, mapa, layout responsivo e componentes reutilizáveis
+  data/       modelos, repositórios (interfaces e implementações), dados simulados, OpenStreetMap e armazenamento local
+  domain/     regras e motor de alertas
+  state/      providers
+  features/   telas: auth, overview, demand_map, bins_map, alerts, inspection, settings
+test/         testes de regras, validadores, contraste, navegação, persistência e layout
+tool/         script que gera os pontos de descarte
+```
 
-## Próximos passos
+## Como executar
 
-- Back-end e autenticação com Firebase.
-- Motor de alertas completo em `lib/domain`.
-- Capturas de tela em `assets/screenshots`.
+Requisitos: [Flutter](https://docs.flutter.dev/get-started/install) 3.x e um emulador ou celular Android (a plataforma testada). Não há variáveis de ambiente nem chaves de API.
 
-Os mapas usam os servidores públicos de tiles do OpenStreetMap, adequados para
-desenvolvimento. Para produção, use um provedor de tiles próprio ou contratado.
+```bash
+git clone https://github.com/jumarques03/recicla-radar-sp.git
+cd recicla-radar-sp
+flutter pub get
+flutter devices            # lista os dispositivos
+flutter run -d <id>        # roda no dispositivo escolhido
+```
+
+Conta de demonstração: e-mail `fiscal@reciclaradar.sp` e senha `senha123`.
+
+Outros comandos:
+
+```bash
+flutter analyze            # análise estática
+flutter test               # testes automatizados
+flutter build apk          # gera o APK de release
+```
+
+O contorno dos distritos é buscado na internet na primeira vez que o app abre; depois fica guardado e o app funciona sem conexão.
+
+## Vídeo
+
+Demonstração de até 3 minutos: _adicionar link do vídeo_
+
+## Licença
+
+Projeto acadêmico da FIAP, Global Solution 2026.2. Os dados do mapa são © colaboradores do OpenStreetMap, sob a licença ODbL.
