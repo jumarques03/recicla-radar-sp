@@ -54,11 +54,11 @@ O fiscal entra com a conta de demonstração e vê quatro abas:
 - **Visão geral:** quilos coletados, lixeiras operando, alertas ativos e material desviado do aterro, com filtros de período (7, 30 e 90 dias) e de material, e gráficos de evolução e de participação de cada material.
 - **Demanda:** mapa de São Paulo com os 96 distritos coloridos pelo índice de demanda (0 a 100). Tocar num distrito abre o painel com o histórico semanal do índice e atalhos para as lixeiras e os alertas dele. Há também uma lista como alternativa ao mapa.
 - **Lixeiras:** mapa e lista, com filtros por situação. O detalhe mostra o enchimento, a última coleta, os alertas e, em blocos recolhidos, o material coletado, o enchimento dos últimos 7 dias e as vistorias.
-- **Alertas:** lista do mais grave ao menos grave (e, em igual gravidade, do mais antigo ao mais novo). Cada alerta mostra os dados que o justificam, como foi calculado, a confiança e suas limitações, e permite marcar como *Em análise*, *Resolvido* ou *Descartado*. Alertas resolvidos ou descartados saem da lista e ficam numa seção que se abre e se fecha.
+- **Alertas:** lista do mais grave ao menos grave (e, em igual gravidade, do mais antigo ao mais novo). Cada alerta abre com o cartão **"Por que este alerta apareceu?"** (o que o sistema viu, as condições da regra com os valores encontrados e a conclusão), seguido dos dados que o justificam, da confiança e das limitações. Embaixo, a pessoa decide pelo que quer fazer: *Assumir e investigar*, *Alocar equipe* (com equipe e prazo), *Concluir alerta* (com o resultado) ou *Descartar alerta* (com o motivo), e cada decisão entra num histórico do alerta. Alertas resolvidos ou descartados saem da lista e ficam numa seção que se abre e se fecha. O ícone de ajuda na lista explica como os alertas são gerados.
 
 Alerta, lixeira e distrito se levam uns aos outros (por exemplo, do alerta para a lixeira, para o mapa e para o distrito). O selo da aba Alertas conta só os alertas ativos ainda não lidos; cada alerta pode ser marcado como lido ou não lido, ou todos de uma vez.
 
-**Vistoria:** formulário com lixeira, tipo de ocorrência, gravidade, descrição, data e hora e se precisa de coleta ou reparo, com validação e um atalho que preenche "Coletar lixo da lixeira". Vistorias graves geram alerta.
+**Vistoria:** formulário com lixeira, tipo de ocorrência, gravidade, descrição, data e hora e se precisa de coleta ou reparo, com validação e um atalho que preenche "Coletar lixo da lixeira". Vistorias graves geram alerta. Quando a lixeira tem um alerta ativo, a vistoria pergunta se ela **confirma o alerta** (confirma, não confirma ou inconclusivo): a resposta aparece no alerta, e a Visão geral mostra quantos alertas conferidos em campo foram confirmados. O botão "Verificar em campo", na tela do alerta, abre o formulário já preenchido.
 
 **Configurações:** tema (sistema, claro ou escuro), alto contraste, tamanho da letra, limiar de enchimento dos alertas e consentimento de uso dos dados pessoais.
 
@@ -66,7 +66,9 @@ Alerta, lixeira e distrito se levam uns aos outros (por exemplo, do alerta para 
 
 - [x] 11 rotas nomeadas com passagem de parâmetros (`/lixeiras/:id`, `/alertas/:id`, `/vistoria?binId=`...)
 - [x] 3 dashboards: visão geral, demanda por distrito e lixeiras, com gráficos, cards e histórico
-- [x] Alertas calculados a partir dos dados, com evidência, confiança e limitações
+- [x] Alertas calculados a partir dos dados, com as condições da regra, evidência, confiança e limitações
+- [x] Decisão humana por ação (assumir, alocar equipe, concluir, descartar), com histórico salvo
+- [x] Vistoria ligada ao alerta, com resposta de campo e indicador de alertas confirmados
 - [x] Aviso visível de que os alertas apoiam, mas não substituem, a decisão humana
 - [x] Estado global compartilhado entre telas, com carregando, erro e lista vazia
 - [x] Dados de serviço externo (OpenStreetMap) e dados simulados por repositórios
@@ -82,7 +84,7 @@ Alerta, lixeira e distrito se levam uns aos outros (por exemplo, do alerta para 
 
 **Fonte dos dados.** Os pontos de descarte, as lixeiras e as leituras são **sintéticos**, criados para o projeto a partir da lista real de distritos (`tool/gerar_distritos.py` consulta o OpenStreetMap uma vez para sortear pontos dentro de cada distrito). O contorno de São Paulo e dos 96 distritos vem do **OpenStreetMap** (serviço Nominatim) e fica guardado no aparelho depois da primeira busca.
 
-**Como os alertas são gerados** (`lib/domain/alert_engine.dart`). Cada regra lê as leituras das lixeiras e devolve alertas com id estável, para a decisão da pessoa não se perder quando os dados são recalculados.
+**Como os alertas são gerados** (`lib/domain/alert_engine.dart`). Cada regra lê as leituras das lixeiras e devolve alertas com id estável, para a decisão da pessoa não se perder quando os dados são recalculados. Cada alerta guarda também as **condições** da regra com o valor encontrado e o limite (por exemplo, "Enchimento atual de 98% (o alerta vale a partir de 80%)"), e é isso que a tela mostra em "Por que este alerta apareceu?".
 
 | Alerta | Dispara quando | Gravidade |
 | --- | --- | --- |
@@ -95,6 +97,8 @@ Alerta, lixeira e distrito se levam uns aos outros (por exemplo, do alerta para 
 
 **Métricas.** Ritmo de enchimento (% por hora, desde a última coleta), média de 30 dias por material, variação semanal de volume por distrito e índice de demanda (posição do distrito em relação aos demais). A **confiança** (alta, média ou baixa) vem da quantidade de leituras, da regularidade do ritmo, dos dias seguidos e de quantas lixeiras do distrito foram afetadas, e o motivo aparece escrito no alerta.
 
+**Vistorias e desempenho dos alertas.** Quando a pessoa responde se uma vistoria confirma um alerta, a resposta fica no alerta, e a Visão geral mostra "X de Y alertas conferidos em campo foram confirmados". É a medida do projeto de quantos alertas se confirmam na prática, mas só vale para os alertas que alguém foi conferir.
+
 **Limitações e vieses.**
 - Os dados são simulados: os números mostram o funcionamento, não a realidade de São Paulo.
 - O percentual de material reaproveitado (75%) é uma suposição do projeto, não uma medição oficial.
@@ -105,7 +109,7 @@ Alerta, lixeira e distrito se levam uns aos outros (por exemplo, do alerta para 
 
 ## Privacidade e inclusão
 
-- **Consentimento:** o cadastro pede o aceite, e as Configurações permitem mudar a escolha. Com o consentimento ligado, a vistoria leva o nome de quem registrou; desligado, é registrada de forma **anônima**. O formulário avisa qual dos dois vale.
+- **Consentimento:** o cadastro pede o aceite, e as Configurações permitem mudar a escolha. Com o consentimento ligado, a vistoria e as decisões do histórico do alerta levam o nome de quem registrou; desligado, ficam de forma **anônima**. O formulário avisa qual dos dois vale.
 - **Dados pessoais mínimos:** só o nome, e só com consentimento. Tudo fica no aparelho (`shared_preferences`); não há servidor.
 - **Contas no aparelho:** o cadastro cria a conta no próprio aparelho, e ela continua existindo depois de fechar o app. A senha não é guardada em texto, só um resumo (SHA-256 com sal). Como não há servidor, o login serve para demonstrar o fluxo e não oferece segurança real.
 - **Acessibilidade:** contraste WCAG AA nos temas claro e escuro e AAA (7:1) no de alto contraste, verificados por teste; tamanho de letra ajustável e respeito à fonte do sistema; alvos de toque de pelo menos 48 dp; gravidade e status sempre com ícone e texto, nunca só cor; descrições para leitores de tela em botões, gráficos e marcadores; animações desligadas quando o aparelho pede menos movimento.
@@ -150,6 +154,8 @@ flutter run -d <id>        # roda no dispositivo escolhido
 ```
 
 Conta de demonstração: e-mail `fiscal@reciclaradar.sp` e senha `senha123`.
+
+Se preferir instalar sem compilar, baixe o APK mais recente em [Releases](https://github.com/jumarques03/recicla-radar-sp/releases).
 
 Outros comandos:
 
