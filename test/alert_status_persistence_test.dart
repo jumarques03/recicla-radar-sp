@@ -181,4 +181,7 @@ class _RecordingRepository implements AlertRepository {
   @override
   Future<Alert> updateStatus(String alertId, AlertStatus status) =>
       throw UnimplementedError();
+
+  @override
+  Future<Alert> decide(String alertId, AlertEvent event) => throw UnimplementedError();
 }

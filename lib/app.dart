@@ -8,6 +8,7 @@ import 'package:recicla_radar_sp/core/router/app_router.dart';
 import 'package:recicla_radar_sp/core/theme/dark_theme.dart';
 import 'package:recicla_radar_sp/core/theme/high_contrast_theme.dart';
 import 'package:recicla_radar_sp/core/theme/light_theme.dart';
+import 'package:recicla_radar_sp/data/local/alert_history_store.dart';
 import 'package:recicla_radar_sp/data/local/alert_seen_store.dart';
 import 'package:recicla_radar_sp/data/local/alert_status_store.dart';
 import 'package:recicla_radar_sp/data/mock/district_seeds.dart';
@@ -87,7 +88,12 @@ class ReciclaRadarApp extends StatelessWidget {
         ),
         ChangeNotifierProxyProvider<SettingsProvider, AlertsProvider>(
           create: (context) => AlertsProvider(
-            alertRepository ?? EngineAlertRepository(SharedPrefsAlertStatusStore(prefs), inspections),
+            alertRepository ??
+                EngineAlertRepository(
+                  SharedPrefsAlertStatusStore(prefs),
+                  inspections,
+                  history: SharedPrefsAlertHistoryStore(prefs),
+                ),
             alertSeenStore ?? SharedPrefsAlertSeenStore(prefs),
             context.read<SettingsProvider>().fillThreshold,
           )..load(),

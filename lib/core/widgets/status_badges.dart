@@ -66,6 +66,7 @@ extension AlertStatusVisuals on AlertStatus {
   IconData get icon => switch (this) {
         AlertStatus.open => Icons.notifications_active_outlined,
         AlertStatus.inAnalysis => Icons.search,
+        AlertStatus.teamAssigned => Icons.groups_outlined,
         AlertStatus.resolved => Icons.check_circle_outline,
         AlertStatus.discarded => Icons.block,
       };
@@ -75,6 +76,7 @@ extension AlertStatusVisuals on AlertStatus {
     return switch (this) {
       AlertStatus.open => colors.warning,
       AlertStatus.inAnalysis => colors.info,
+      AlertStatus.teamAssigned => colors.info,
       AlertStatus.resolved => colors.success,
       AlertStatus.discarded => colors.neutral,
     };

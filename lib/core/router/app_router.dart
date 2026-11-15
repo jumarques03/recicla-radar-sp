@@ -103,8 +103,10 @@ GoRouter createAppRouter(SessionProvider session) {
       GoRoute(
         name: AppRoutes.inspection,
         path: '/vistoria',
-        builder: (context, state) =>
-            InspectionScreen(binId: state.uri.queryParameters['binId']),
+        builder: (context, state) => InspectionScreen(
+          binId: state.uri.queryParameters['binId'],
+          alertId: state.uri.queryParameters[AppRoutes.alertParam],
+        ),
       ),
       GoRoute(
         name: AppRoutes.settings,

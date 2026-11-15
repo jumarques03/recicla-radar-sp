@@ -66,11 +66,16 @@ void main() {
     await tester.tap(find.textContaining('deve encher').first);
     await tester.pumpAndSettle(const Duration(seconds: 1));
     final scrollable = find.descendant(of: find.byType(ContentListView), matching: find.byType(Scrollable)).first;
-    await tester.scrollUntilVisible(find.text('Resolvido'), 300, scrollable: scrollable);
+    await tester.scrollUntilVisible(find.text('Concluir alerta'), 300, scrollable: scrollable);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Resolvido'));
+    await tester.tap(find.text('Concluir alerta'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Confirmar: concluir alerta'));
     await tester.pumpAndSettle();
     await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+    // Espera o aviso "Registrado: ..." sumir, para não ficar em cima da lista.
+    await tester.pump(const Duration(seconds: 6));
     await tester.pumpAndSettle();
 
     // Fora da lista, com o aviso de quantos estão escondidos.

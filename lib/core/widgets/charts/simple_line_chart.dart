@@ -40,25 +40,25 @@ class SimpleLineChart extends StatelessWidget {
     // Escala: do zero ao máximo, ou só a faixa dos valores quando [autoScale].
     var minAxis = 0.0;
     var maxAxis = maxY;
+    double? leftInterval;
     if (autoScale && values.isNotEmpty) {
-      final low = values.reduce((a, b) => a < b ? a : b);
-      final high = values.reduce((a, b) => a > b ? a : b);
-      minAxis = (((low - 4) / 10).floor() * 10.0).clamp(0, 1000);
-      var top = (((high + 4) / 10).ceil() * 10.0);
-      if (maxY != null && top > maxY!) top = maxY!;
-      // A altura do eixo vira múltiplo de 20, para o rótulo do meio cair num número redondo.
-      var span = top - minAxis;
-      if (span < 20) span = 20;
-      span = (span / 20).ceil() * 20.0;
-      maxAxis = minAxis + span;
-      if (maxY != null && maxAxis > maxY!) {
-        maxAxis = maxY!;
-        minAxis = (maxAxis - span).clamp(0, maxAxis);
+      final low = values.reduce((a, b) => a < b ? a : b) - 4;
+      final high = values.reduce((a, b) => a > b ? a : b) + 4;
+      // Intervalo de 10 (ou 20 se os valores variam muito). Os números do eixo caem
+      // sempre em múltiplos dele, porque o gráfico desenha os rótulos a partir do zero.
+      final interval = (high - low) <= 40 ? 10.0 : 20.0;
+      var lo = (low / interval).floor() * interval;
+      var hi = (high / interval).ceil() * interval;
+      if (maxY != null && hi > maxY!) hi = (maxY! / interval).floor() * interval;
+      if (hi - lo < interval * 2) lo = hi - interval * 2;
+      if (lo < 0) {
+        lo = 0;
+        hi = interval * 2;
       }
+      minAxis = lo;
+      maxAxis = hi;
+      leftInterval = interval;
     }
-    final leftInterval = autoScale && maxAxis != null
-        ? (maxAxis - minAxis) / 2
-        : null;
 
     final spots = [
       for (var i = 0; i < values.length; i++) FlSpot(i.toDouble(), values[i]),

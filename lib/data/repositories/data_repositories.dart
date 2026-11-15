@@ -30,6 +30,9 @@ abstract interface class AlertRepository {
   Future<List<Alert>> fetchAlerts({required int fillThreshold});
 
   Future<Alert> updateStatus(String alertId, AlertStatus status);
+
+  /// Registra uma decisão tomada por uma pessoa: muda o status e entra no histórico.
+  Future<Alert> decide(String alertId, AlertEvent event);
 }
 
 abstract interface class InspectionRepository {

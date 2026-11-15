@@ -112,6 +112,32 @@ class AlertEngine {
                 '${Formatters.decimal(trend.perHour)}% por hora (média dos últimos '
                 '${trend.readingCount - 1} dias desde a última coleta). No ritmo atual, ela fica '
                 'cheia em aproximadamente $hours horas.',
+        conditions: [
+          AlertCondition(
+            'Enchimento atual de ${bin.fillPercent}% (o alerta vale a partir de ${input.fillThreshold}%)',
+            bin.fillPercent >= input.fillThreshold,
+          ),
+          if (trend == null)
+            AlertCondition(
+              'Previsão de lotação não calculada: há menos de ${FillTrend.minReadings} '
+              'leituras desde a última coleta',
+              false,
+            )
+          else ...[
+            AlertCondition(
+              'Ritmo de ${Formatters.decimal(trend.perHour)}% por hora, medido em '
+              '${trend.readingCount} leituras desde a última coleta',
+              true,
+            ),
+            AlertCondition(
+              suggestion.hasForecast
+                  ? 'Previsão de lotação em $hours h (o alerta vale se for em menos de '
+                      '${rule.horizonHours.round()} h)'
+                  : 'Sem previsão de lotação: a lixeira não está enchendo no ritmo medido',
+              suggestion.hasForecast && suggestion.hoursToFull <= rule.horizonHours,
+            ),
+          ],
+        ],
         evidence: _lastSevenDays(readings, (r) => r.fillPercent.toDouble()),
         evidenceLabel: 'Enchimento (%) nos últimos 7 dias',
         rule: suggestion.rule,
@@ -175,6 +201,16 @@ class AlertEngine {
         binId: bin.id,
         districtId: bin.districtId,
         detected: 'O sensor não envia leituras há ${hit.hours} horas.',
+        conditions: [
+          AlertCondition(
+            'Sem leituras há ${hit.hours} h (o alerta vale após ${signalLoss.alertAfterHours} h)',
+            true,
+          ),
+          AlertCondition(
+            'Mais de ${signalLoss.criticalAfterHours} h sem sinal deixa o alerta crítico',
+            hit.hours >= signalLoss.criticalAfterHours,
+          ),
+        ],
         evidence: [
           for (var back = 6; back >= 0; back--)
             datesWithReadings.contains(today.subtract(Duration(days: back))) ? 1.0 : 0.0,
@@ -215,6 +251,22 @@ class AlertEngine {
           districtId: bin.districtId,
           detected: 'A quantidade de $material0 foi ${Formatters.decimal(hit.ratio)} vezes maior '
               'que a média de ${Formatters.kg(hit.baselineKg)} por dia, por ${hit.runDays} dias seguidos.',
+          conditions: [
+            AlertCondition(
+              'Quantidade ${Formatters.decimal(hit.ratio)} vezes a média '
+              '(o alerta vale acima de ${anomaly.factor.round()} vezes)',
+              true,
+            ),
+            AlertCondition(
+              'Por ${hit.runDays} dias seguidos (o alerta vale a partir de ${anomaly.minRunDays} dias)',
+              true,
+            ),
+            AlertCondition(
+              'Média de comparação: ${Formatters.kg(hit.baselineKg)} por dia, '
+              'dos últimos ${anomaly.baselineDays} dias',
+              true,
+            ),
+          ],
           evidence: _lastSevenDays(readings, (r) => r.kgByMaterial[material] ?? 0),
           evidenceLabel: '${material.label} coletado (kg) nos últimos 7 dias',
           rule: anomaly.ruleText,
@@ -287,6 +339,17 @@ class AlertEngine {
         districtId: district.id,
         detected: 'O volume coletado nos últimos 7 dias caiu '
             '${Formatters.decimal(hit.dropPercent)}% em relação à média das 4 semanas anteriores.',
+        conditions: [
+          AlertCondition(
+            'Queda de ${Formatters.decimal(hit.dropPercent)}% no volume dos últimos 7 dias '
+            '(o alerta vale acima de ${(collectionDrop.alertDrop * 100).round()}%)',
+            true,
+          ),
+          AlertCondition(
+            '$binsThatDropped de ${bins.length} lixeiras do distrito também tiveram queda',
+            binsThatDropped >= 2,
+          ),
+        ],
         evidence: _districtDailyKg(bins, input.readingsByBin, today),
         evidenceLabel: 'Kg coletados por dia no distrito, nos últimos 7 dias',
         rule: collectionDrop.ruleText,
@@ -323,6 +386,18 @@ class AlertEngine {
         districtId: district.id,
         detected: 'O índice de demanda do distrito é ${district.demandIndex}, mas só '
             '${working == 1 ? 'há 1 lixeira funcionando' : 'há $working lixeiras funcionando'}.',
+        conditions: [
+          AlertCondition(
+            'Índice de demanda ${district.demandIndex} (o alerta vale a partir de ${coverage.minDemandIndex})',
+            true,
+          ),
+          AlertCondition(
+            working == 1
+                ? 'Só 1 lixeira funcionando (o alerta vale com até ${coverage.maxWorkingBins})'
+                : 'Só $working lixeiras funcionando (o alerta vale com até ${coverage.maxWorkingBins})',
+            true,
+          ),
+        ],
         evidence: [for (final value in district.history) value.toDouble()],
         evidenceLabel: 'Índice de demanda nas últimas semanas',
         rule: coverage.ruleText,
@@ -361,6 +436,22 @@ class AlertEngine {
             'em ${Formatters.dateTime(item.dateTime)}: "${item.description}". '
             'Gravidade ${item.severity.label.toLowerCase()}'
             '${item.needsAction ? ', com pedido de coleta ou reparo' : ''}.',
+        conditions: [
+          AlertCondition(
+            'Vistoria feita nos últimos ${inspection.recentDays} dias '
+            '(${Formatters.dateTime(item.dateTime)})',
+            true,
+          ),
+          AlertCondition(
+            'Gravidade ${item.severity.label.toLowerCase()} (gravidade alta gera alerta)',
+            item.severity == InspectionSeverity.high,
+          ),
+          AlertCondition(
+            'Tipo: ${item.type.label.toLowerCase()} '
+            '(lixeira danificada ou vandalismo geram alerta)',
+            item.type == OccurrenceType.damaged || item.type == OccurrenceType.vandalized,
+          ),
+        ],
         evidence: _lastSevenDays(readings, (r) => r.fillPercent.toDouble()),
         evidenceLabel: 'Enchimento (%) nos últimos 7 dias, para contexto',
         rule: inspection.ruleText,

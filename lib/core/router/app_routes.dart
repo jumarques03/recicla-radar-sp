@@ -16,6 +16,7 @@ abstract final class AppRoutes {
   static const String districtParam = 'distrito';
   static const String binParam = 'lixeira';
   static const String modeParam = 'modo';
+  static const String alertParam = 'alertaId';
 
   static const String loginPath = '/login';
   static const String registerPath = '/cadastro';

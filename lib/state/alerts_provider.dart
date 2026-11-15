@@ -88,10 +88,19 @@ class AlertsProvider extends LoadableNotifier<List<Alert>> {
 
   /// Ação humana: quem decide é a pessoa, não o sistema.
   Future<void> updateStatus(String alertId, AlertStatus status) async {
-    final updated = await _repository.updateStatus(alertId, status);
+    _replace(await _repository.updateStatus(alertId, status));
+  }
+
+  /// Decisão com ação, prazo ou observação (alocar equipe, concluir, descartar...).
+  /// Fica no histórico do alerta.
+  Future<void> decide(String alertId, AlertEvent event) async {
+    _replace(await _repository.decide(alertId, event));
+  }
+
+  void _replace(Alert updated) {
     replaceData([
       for (final alert in _alerts)
-        if (alert.id == alertId) updated else alert,
+        if (alert.id == updated.id) updated else alert,
     ]);
   }
 }

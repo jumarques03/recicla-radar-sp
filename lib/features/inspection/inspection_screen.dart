@@ -9,6 +9,7 @@ import 'package:recicla_radar_sp/core/utils/formatters.dart';
 import 'package:recicla_radar_sp/core/utils/validators.dart';
 import 'package:recicla_radar_sp/core/widgets/state_views.dart';
 import 'package:recicla_radar_sp/data/models/bin.dart';
+import 'package:recicla_radar_sp/data/models/alert.dart';
 import 'package:recicla_radar_sp/data/models/inspection.dart';
 import 'package:recicla_radar_sp/domain/inspection_rule.dart';
 import 'package:recicla_radar_sp/state/alerts_provider.dart';
@@ -18,10 +19,13 @@ import 'package:recicla_radar_sp/state/session_provider.dart';
 import 'package:recicla_radar_sp/state/settings_provider.dart';
 
 class InspectionScreen extends StatefulWidget {
-  const InspectionScreen({super.key, this.binId});
+  const InspectionScreen({super.key, this.binId, this.alertId});
 
   /// Lixeira já escolhida, quando a pessoa vem da tela de detalhe.
   final String? binId;
+
+  /// Alerta que a vistoria vai conferir, quando a pessoa vem da tela do alerta.
+  final String? alertId;
 
   @override
   State<InspectionScreen> createState() => _InspectionScreenState();
@@ -41,6 +45,30 @@ class _InspectionScreenState extends State<InspectionScreen> {
   DateTime? _dateTime;
   bool _needsAction = false;
   bool _busy = false;
+
+  /// Resposta sobre o alerta ativo da lixeira (opcional).
+  AlertCheck? _check;
+
+  @override
+  void initState() {
+    super.initState();
+    // Vindo de um alerta, a lixeira e o tipo de ocorrência já saem preenchidos.
+    final alert = widget.alertId == null ? null : context.read<AlertsProvider>().byId(widget.alertId!);
+    if (alert != null) {
+      _binId ??= alert.binId;
+      _type = alert.type == AlertType.fillPrediction ? OccurrenceType.full : OccurrenceType.other;
+    }
+  }
+
+  /// Alerta que esta vistoria pode conferir: o que veio da tela do alerta ou,
+  /// senão, o mais grave entre os ativos da lixeira escolhida.
+  Alert? _targetAlert(AlertsProvider alerts) {
+    if (widget.alertId != null) return alerts.byId(widget.alertId!);
+    final binId = _binId;
+    if (binId == null) return null;
+    final active = alerts.activeForBin(binId);
+    return active.isEmpty ? null : active.first;
+  }
 
   @override
   void dispose() {
@@ -120,6 +148,8 @@ class _InspectionScreenState extends State<InspectionScreen> {
       needsAction: _needsAction,
       // Sem consentimento para o uso dos dados pessoais, a vistoria é anônima.
       authorName: consent ? author : null,
+      alertId: _check != null || widget.alertId != null ? _targetAlert(alerts)?.id : null,
+      check: _targetAlert(alerts) == null ? null : _check,
     );
 
     setState(() => _busy = true);
@@ -131,15 +161,15 @@ class _InspectionScreenState extends State<InspectionScreen> {
       // O botão volta ao normal antes do aviso, para a rodinha não girar atrás dele.
       setState(() => _busy = false);
       final createdAlert = const InspectionRule().evaluate(inspection, DateTime.now()) != null;
+      final check = inspection.check;
       await showDialog<void>(
         context: context,
         builder: (context) => AlertDialog(
           icon: Icon(Icons.check_circle_outline, color: Theme.of(context).colorScheme.secondary),
           title: const Text('Vistoria registrada'),
           content: Text(
-            createdAlert
-                ? 'Obrigado! Esta vistoria gerou um alerta para a equipe. Você o encontra na aba Alertas.'
-                : 'Obrigado! Sua vistoria foi salva neste aparelho.',
+            '${createdAlert ? 'Obrigado! Esta vistoria gerou um alerta para a equipe. Você o encontra na aba Alertas.' : 'Obrigado! Sua vistoria foi salva neste aparelho.'}'
+            '${check == null ? '' : ' Sua resposta ("${check.label}") ficou registrada no alerta.'}',
           ),
           actions: [
             FilledButton(
@@ -177,6 +207,7 @@ class _InspectionScreenState extends State<InspectionScreen> {
     final consent = context.select<SettingsProvider, bool>((s) => s.consent);
     final authorName = context.select<SessionProvider, String?>((s) => s.user?.name);
     final theme = Theme.of(context);
+    final target = _targetAlert(context.watch<AlertsProvider>());
 
     return Scaffold(
       appBar: AppBar(title: const Text('Registrar vistoria')),
@@ -210,7 +241,11 @@ class _InspectionScreenState extends State<InspectionScreen> {
                           ),
                       ],
                       validator: (value) => value == null ? 'Escolha a lixeira.' : null,
-                      onChanged: (value) => setState(() => _binId = value),
+                      onChanged: (value) => setState(() {
+                        _binId = value;
+                        // Cada lixeira tem os seus alertas: a resposta anterior não vale mais.
+                        _check = null;
+                      }),
                     ),
                     const SizedBox(height: AppSpacing.md),
                     DropdownButtonFormField<OccurrenceType>(
@@ -291,6 +326,14 @@ class _InspectionScreenState extends State<InspectionScreen> {
                       title: const Text('Precisa de coleta ou reparo'),
                       subtitle: Text(_needsAction ? 'Sim, precisa.' : 'Não precisa por enquanto.'),
                     ),
+                    if (target != null) ...[
+                      const SizedBox(height: AppSpacing.md),
+                      _AlertCheckField(
+                        alert: target,
+                        value: _check,
+                        onChanged: (value) => setState(() => _check = value),
+                      ),
+                    ],
                     const SizedBox(height: AppSpacing.lg),
                     FilledButton.icon(
                       onPressed: _busy ? null : _submit,
@@ -307,6 +350,62 @@ class _InspectionScreenState extends State<InspectionScreen> {
                 ),
               ),
             ),
+    );
+  }
+}
+
+/// Pergunta se a vistoria confirma o alerta que está ativo na lixeira.
+class _AlertCheckField extends StatelessWidget {
+  const _AlertCheckField({required this.alert, required this.value, required this.onChanged});
+
+  final Alert alert;
+  final AlertCheck? value;
+  final ValueChanged<AlertCheck?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.sm + 4),
+      decoration: BoxDecoration(
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Esta vistoria confirma o alerta?', style: theme.textTheme.titleMedium),
+          const SizedBox(height: AppSpacing.xs),
+          Text(alert.title, style: theme.textTheme.bodyMedium),
+          const SizedBox(height: AppSpacing.sm + 4),
+          SegmentedButton<AlertCheck>(
+            emptySelectionAllowed: true,
+            showSelectedIcon: false,
+            style: SegmentedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 6)),
+            segments: const [
+              ButtonSegment(
+                value: AlertCheck.confirms,
+                label: FittedBox(fit: BoxFit.scaleDown, child: Text('Confirma')),
+              ),
+              ButtonSegment(
+                value: AlertCheck.denies,
+                label: FittedBox(fit: BoxFit.scaleDown, child: Text('Não confirma')),
+              ),
+              ButtonSegment(
+                value: AlertCheck.inconclusive,
+                label: FittedBox(fit: BoxFit.scaleDown, child: Text('Inconclusivo')),
+              ),
+            ],
+            selected: {?value},
+            onSelectionChanged: (values) => onChanged(values.isEmpty ? null : values.first),
+          ),
+          const SizedBox(height: AppSpacing.xs + 2),
+          Text(
+            'Opcional. Sua resposta fica no histórico do alerta e ajuda a medir quantos alertas se confirmam em campo.',
+            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          ),
+        ],
+      ),
     );
   }
 }

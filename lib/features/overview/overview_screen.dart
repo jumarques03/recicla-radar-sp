@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'package:recicla_radar_sp/core/responsive/responsive.dart';
 import 'package:recicla_radar_sp/core/theme/app_spacing.dart';
+import 'package:recicla_radar_sp/features/overview/field_check_card.dart';
 import 'package:recicla_radar_sp/core/utils/formatters.dart';
 import 'package:recicla_radar_sp/core/widgets/charts/chart_card.dart';
 import 'package:recicla_radar_sp/core/widgets/charts/material_charts.dart';
@@ -69,6 +70,8 @@ class OverviewScreen extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.md),
             const CriticalAlertsCard(),
+            const SizedBox(height: AppSpacing.md),
+            const FieldCheckCard(),
             const SizedBox(height: AppSpacing.md),
             // Carregando, erro e vazio precisam de altura própria dentro da lista.
             SizedBox(

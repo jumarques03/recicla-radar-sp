@@ -69,8 +69,9 @@ void main() {
       await bringToMiddle(tester, find.textContaining('deve encher'));
       await tester.tap(find.textContaining('deve encher').first);
       await tester.pumpAndSettle(const Duration(seconds: 1));
-      await scrollTo(tester, 'Qual é a sua decisão?');
-      expect(find.text('Qual é a sua decisão?'), findsOneWidget);
+      expect(find.text('Por que este alerta apareceu?'), findsOneWidget);
+      await scrollTo(tester, 'O que você vai fazer?');
+      expect(find.text('O que você vai fazer?'), findsOneWidget);
       expect(tester.takeException(), isNull);
       await tester.tap(find.byType(BackButton));
       await tester.pumpAndSettle();

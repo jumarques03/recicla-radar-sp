@@ -57,16 +57,20 @@ void main() {
     await openApp(tester, prefs);
     await openFirstAlert(tester);
 
-    await scrollDetailTo(tester, find.text('Em análise'));
-    await tester.tap(find.text('Em análise'));
+    await scrollDetailTo(tester, find.text('Assumir e investigar'));
+    await tester.tap(find.text('Assumir e investigar'));
     await tester.pumpAndSettle();
-    expect(find.text('Em análise (atual)'), findsOneWidget);
+    await tester.tap(find.text('Confirmar: assumir e investigar'));
+    await tester.pumpAndSettle();
+    expect(find.text('Situação atual: Em análise'), findsOneWidget);
 
     await closeApp(tester);
     await openApp(tester, prefs);
     await openFirstAlert(tester);
-    await scrollDetailTo(tester, find.text('Em análise (atual)'));
-    expect(find.text('Em análise (atual)'), findsOneWidget);
+    await scrollDetailTo(tester, find.text('Situação atual: Em análise'));
+    expect(find.text('Situação atual: Em análise'), findsOneWidget);
+    // A decisão também ficou no histórico do alerta.
+    expect(find.text('Assumiu o alerta e começou a investigar'), findsOneWidget);
   });
 
   testWidgets('alertas lidos e as configurações continuam depois de reabrir', (tester) async {

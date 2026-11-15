@@ -13,6 +13,7 @@ import 'package:recicla_radar_sp/data/models/alert.dart';
 import 'package:recicla_radar_sp/data/models/district.dart';
 import 'package:recicla_radar_sp/features/alerts/alert_card.dart';
 import 'package:recicla_radar_sp/features/alerts/alert_filters.dart';
+import 'package:recicla_radar_sp/features/alerts/alerts_explainer_sheet.dart';
 import 'package:recicla_radar_sp/features/alerts/human_decision_banner.dart';
 import 'package:recicla_radar_sp/state/alerts_provider.dart';
 import 'package:recicla_radar_sp/state/bins_provider.dart';
@@ -70,6 +71,11 @@ class _AlertsScreenState extends State<AlertsScreen> {
       appBar: AppBar(
         title: const Text('Alertas'),
         actions: [
+          IconButton(
+            tooltip: 'Como os alertas são gerados',
+            icon: const Icon(Icons.help_outline),
+            onPressed: () => showAlertsExplainer(context),
+          ),
           IconButton(
             tooltip: alerts.unseenCount > 0
                 ? 'Marcar os ${alerts.unseenCount} alertas não lidos como lidos'
